@@ -431,7 +431,7 @@ export default function StudentManagement() {
                         onClick={() => openEdit(student)}
                         aria-label={`Chỉnh sửa thông tin ${student.name}`}
                         title="Chỉnh sửa thông tin"
-                        className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-600 hover:bg-blue-100/80 hover:text-blue-700 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer"
+                        className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -440,7 +440,7 @@ export default function StudentManagement() {
                         onClick={() => openDelete(student)}
                         aria-label={`Xóa sinh viên ${student.name}`}
                         title="Xóa sinh viên"
-                        className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-600 hover:bg-rose-100/80 hover:text-rose-700 transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 outline-none cursor-pointer"
+                        className="min-w-[36px] min-h-[36px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors focus-visible:ring-2 focus-visible:ring-rose-500 outline-none cursor-pointer"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>

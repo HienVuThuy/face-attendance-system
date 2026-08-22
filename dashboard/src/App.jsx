@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Sidebar from './components/Sidebar';
 import Header from './components/Header';
 import { ToastProvider } from './components/Toast';
@@ -19,9 +19,60 @@ const pages = {
   settings: Settings,
 };
 
+const tabOrder = ['dashboard', 'camera', 'students', 'logs', 'timesheet', 'settings'];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState(false);
+
+  // Responsive Viewport Detection (Mobile / Tablet / Desktop)
+  useEffect(() => {
+    const checkViewport = () => {
+      const mobile = window.innerWidth < 768;
+      setIsMobile(mobile);
+      if (!mobile) {
+        setMobileDrawerOpen(false);
+      }
+    };
+    checkViewport();
+    window.addEventListener('resize', checkViewport);
+    return () => window.removeEventListener('resize', checkViewport);
+  }, []);
+
+  // Power User Keyboard Navigation (Alex Persona)
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      // Don't trigger if user is actively typing in an input, textarea or select
+      const activeTag = document.activeElement?.tagName?.toLowerCase();
+      if (activeTag === 'input' || activeTag === 'textarea' || activeTag === 'select') {
+        return;
+      }
+
+      // Shortcut '/' to focus first search input
+      if (e.key === '/') {
+        e.preventDefault();
+        const searchInput = document.querySelector('input[type="text"]');
+        if (searchInput) {
+          searchInput.focus();
+        }
+        return;
+      }
+
+      // Keys 1 - 6 to quickly switch tabs
+      const num = parseInt(e.key, 10);
+      if (num >= 1 && num <= 6) {
+        setActiveTab(tabOrder[num - 1]);
+        if (isMobile) {
+          setMobileDrawerOpen(false);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isMobile]);
 
   const ActivePage = pages[activeTab] || Dashboard;
   const sidebarWidth = sidebarCollapsed ? 72 : 260;
@@ -35,19 +86,24 @@ export default function App() {
             onTabChange={setActiveTab}
             collapsed={sidebarCollapsed}
             onCollapse={setSidebarCollapsed}
+            isMobile={isMobile}
+            mobileOpen={mobileDrawerOpen}
+            onCloseMobile={() => setMobileDrawerOpen(false)}
           />
           <Header
             activeTab={activeTab}
             onTabChange={setActiveTab}
             sidebarWidth={`${sidebarWidth}px`}
+            isMobile={isMobile}
+            onToggleMobileMenu={() => setMobileDrawerOpen(!mobileDrawerOpen)}
           />
 
           {/* Main Content */}
           <main
             className="pt-16 min-h-screen transition-all duration-300"
-            style={{ marginLeft: `${sidebarWidth}px` }}
+            style={{ marginLeft: isMobile ? 0 : `${sidebarWidth}px` }}
           >
-            <div className="p-6">
+            <div className="p-3.5 sm:p-6 max-w-7xl mx-auto">
               <ActivePage key={activeTab} />
             </div>
           </main>

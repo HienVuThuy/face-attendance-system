@@ -57,14 +57,6 @@
       "created_at": 1787156256566
     },
     {
-      "id": "B21DCCN008",
-      "name": "Bùi Xuân Mai",
-      "lop": "D21CQCN02-B",
-      "face_descriptors": "[]",
-      "avatar_path": null,
-      "created_at": 1787155260936
-    },
-    {
       "id": "B21DCCN009",
       "name": "Ngô Quốc Nam",
       "lop": "D21CQCN03-B",
@@ -146,55 +138,6 @@
     }
   ],
   "attendance_logs": [
-    {
-      "id": 86,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787328032728,
-      "status": "late",
-      "confidence": 40
-    },
-    {
-      "id": 85,
-      "student_id": "23111",
-      "timestamp": 1787328002908,
-      "status": "late",
-      "confidence": 56
-    },
-    {
-      "id": 84,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787327968356,
-      "status": "late",
-      "confidence": 42
-    },
-    {
-      "id": 83,
-      "student_id": "23111",
-      "timestamp": 1787327942813,
-      "status": "late",
-      "confidence": 69
-    },
-    {
-      "id": 82,
-      "student_id": "23111",
-      "timestamp": 1787327840171,
-      "status": "late",
-      "confidence": 63
-    },
-    {
-      "id": 81,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787327816856,
-      "status": "late",
-      "confidence": 31
-    },
-    {
-      "id": 80,
-      "student_id": "23111",
-      "timestamp": 1787327780076,
-      "status": "late",
-      "confidence": 60
-    },
     {
       "id": 56,
       "student_id": "B21DCCN001",
@@ -719,6 +662,55 @@
       "timestamp": 1787273434019,
       "status": "late",
       "confidence": 44
+    },
+    {
+      "id": 80,
+      "student_id": "23111",
+      "timestamp": 1787327780076,
+      "status": "late",
+      "confidence": 60
+    },
+    {
+      "id": 81,
+      "student_id": "B21DCCN006",
+      "timestamp": 1787327816856,
+      "status": "late",
+      "confidence": 31
+    },
+    {
+      "id": 82,
+      "student_id": "23111",
+      "timestamp": 1787327840171,
+      "status": "late",
+      "confidence": 63
+    },
+    {
+      "id": 83,
+      "student_id": "23111",
+      "timestamp": 1787327942813,
+      "status": "late",
+      "confidence": 69
+    },
+    {
+      "id": 84,
+      "student_id": "B21DCCN006",
+      "timestamp": 1787327968356,
+      "status": "late",
+      "confidence": 42
+    },
+    {
+      "id": 85,
+      "student_id": "23111",
+      "timestamp": 1787328002908,
+      "status": "late",
+      "confidence": 56
+    },
+    {
+      "id": 86,
+      "student_id": "B21DCCN006",
+      "timestamp": 1787328032728,
+      "status": "late",
+      "confidence": 40
     }
   ],
   "settings": {

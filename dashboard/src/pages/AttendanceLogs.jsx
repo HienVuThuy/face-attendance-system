@@ -316,7 +316,7 @@ export default function AttendanceLogs() {
                         onClick={() => { setEditingLog({ ...log }); setShowEditModal(true); }}
                         aria-label={`Sửa trạng thái của ${log.name}`}
                         title="Sửa trạng thái"
-                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-600 hover:bg-blue-100/80 hover:text-blue-700 transition-colors cursor-pointer"
+                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
                       >
                         <Edit3 className="w-3.5 h-3.5" />
                       </button>
@@ -325,7 +325,7 @@ export default function AttendanceLogs() {
                         onClick={() => handleDeleteLog(log.id, log.name)}
                         aria-label={`Xóa bản ghi của ${log.name}`}
                         title="Xóa bản ghi"
-                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-600 hover:bg-rose-100/80 hover:text-rose-700 transition-colors cursor-pointer"
+                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
                       >
                         <Trash2 className="w-3.5 h-3.5" />
                       </button>

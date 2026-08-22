@@ -8,6 +8,7 @@ import {
   Fingerprint,
   ChevronLeft,
   ChevronRight,
+  X,
 } from 'lucide-react';
 
 const navItems = [
@@ -19,31 +20,72 @@ const navItems = [
   { id: 'settings', label: 'Cài đặt hệ thống', icon: Settings },
 ];
 
-export default function Sidebar({ activeTab, onTabChange, collapsed = false, onCollapse }) {
+export default function Sidebar({
+  activeTab,
+  onTabChange,
+  collapsed = false,
+  onCollapse,
+  isMobile = false,
+  mobileOpen = false,
+  onCloseMobile,
+}) {
+  const handleItemClick = (id) => {
+    onTabChange(id);
+    if (isMobile && onCloseMobile) {
+      onCloseMobile();
+    }
+  };
+
   return (
-    <aside
-      className={`fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 ease-in-out select-none ${
-        collapsed ? 'w-[72px]' : 'w-[260px]'
-      }`}
-      style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)' }}
-      aria-label="Thanh điều hướng chính"
-    >
-      {/* Logo */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-white/10">
-        <div className="flex-shrink-0 w-9 h-9 rounded-lg bg-blue-500/20 flex items-center justify-center">
-          <Fingerprint className="w-5 h-5 text-blue-400" />
-        </div>
-        {!collapsed && (
-          <div className="animate-fade-in">
-            <h1 className="text-white font-bold text-sm tracking-wide leading-tight">
-              IoT ATTENDANCE
-            </h1>
-            <p className="text-slate-400 text-[10px] font-semibold tracking-widest uppercase">
-              Face Recognition
-            </p>
+    <>
+      {/* Mobile Backdrop Overlay */}
+      {isMobile && mobileOpen && (
+        <div
+          onClick={onCloseMobile}
+          className="fixed inset-0 bg-slate-950/60 backdrop-blur-xs z-40 transition-opacity animate-fade-in"
+          aria-hidden="true"
+        />
+      )}
+
+      <aside
+        className={`fixed left-0 top-0 h-screen z-50 flex flex-col transition-all duration-300 ease-in-out select-none ${
+          isMobile
+            ? `w-[260px] ${mobileOpen ? 'translate-x-0 shadow-2xl' : '-translate-x-full'}`
+            : collapsed
+            ? 'w-[72px]'
+            : 'w-[260px]'
+        }`}
+        style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e293b 100%)' }}
+        aria-label="Thanh điều hướng chính"
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between px-5 py-5 border-b border-white/10">
+          <div className="flex items-center gap-3">
+            <div className="flex-shrink-0 w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center">
+              <Fingerprint className="w-5 h-5 text-blue-400" />
+            </div>
+            {(!collapsed || isMobile) && (
+              <div className="animate-fade-in">
+                <h1 className="text-white font-bold text-sm tracking-wide leading-tight">
+                  IoT ATTENDANCE
+                </h1>
+                <p className="text-slate-400 text-[10px] font-semibold tracking-widest uppercase">
+                  Face Recognition
+                </p>
+              </div>
+            )}
           </div>
-        )}
-      </div>
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onCloseMobile}
+              aria-label="Đóng menu"
+              className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
+        </div>
 
       {/* Navigation */}
       <nav className="flex-1 py-4 px-3 space-y-1.5 overflow-y-auto" aria-label="Menu chính">
@@ -54,17 +96,17 @@ export default function Sidebar({ activeTab, onTabChange, collapsed = false, onC
             <button
               key={item.id}
               type="button"
-              onClick={() => onTabChange(item.id)}
+              onClick={() => handleItemClick(item.id)}
               aria-current={isActive ? 'page' : undefined}
               aria-label={item.label}
-              className={`w-full min-h-[42px] flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-400 outline-none ${
+              className={`w-full min-h-[42px] flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-200 group relative focus-visible:ring-2 focus-visible:ring-blue-400 outline-none cursor-pointer ${
                 isActive
-                  ? 'bg-blue-500/20 text-blue-300 font-semibold shadow-inner'
+                  ? 'bg-gradient-to-r from-blue-600/30 to-blue-500/10 text-blue-300 font-semibold shadow-inner border-l-2 border-blue-400'
                   : 'text-slate-400 hover:bg-white/5 hover:text-slate-100'
               }`}
             >
               {isActive && (
-                <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-5 bg-blue-400 rounded-r-full" aria-hidden="true" />
+                <div className="absolute right-2 top-1/2 -translate-y-1/2 w-1.5 h-1.5 bg-blue-400 rounded-full animate-pulse-dot" aria-hidden="true" />
               )}
               <Icon className={`w-5 h-5 flex-shrink-0 transition-colors ${
                 isActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-slate-200'
@@ -83,14 +125,14 @@ export default function Sidebar({ activeTab, onTabChange, collapsed = false, onC
           type="button"
           onClick={() => onCollapse && onCollapse(!collapsed)}
           aria-label={collapsed ? 'Mở rộng thanh điều hướng' : 'Thu gọn thanh điều hướng'}
-          className="w-full min-h-[38px] flex items-center justify-center gap-2 px-3 py-2 rounded-lg text-slate-400 hover:bg-white/5 hover:text-slate-200 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none transition-colors text-xs font-medium cursor-pointer"
+          className="w-full min-h-[38px] flex items-center justify-center gap-2 px-3 py-2 rounded-xl text-slate-400 hover:bg-white/5 hover:text-slate-200 focus-visible:ring-2 focus-visible:ring-blue-400 outline-none transition-colors text-xs font-medium cursor-pointer"
         >
           {collapsed ? (
             <ChevronRight className="w-4 h-4" />
           ) : (
             <>
               <ChevronLeft className="w-4 h-4" />
-              <span>Thu gọn</span>
+              <span>Thu gọn menu</span>
             </>
           )}
         </button>
@@ -105,12 +147,13 @@ export default function Sidebar({ activeTab, onTabChange, collapsed = false, onC
             </div>
             <div className="min-w-0">
               <p className="text-slate-200 text-sm font-semibold truncate">Administrator</p>
-              <p className="text-slate-400 text-[11px] font-mono tabular-nums">v2.0.1 • IoT AI</p>
+              <p className="text-slate-400 text-[11px] font-mono tabular-nums">v2.5.0 • IoT Face AI</p>
             </div>
           </div>
         </div>
       )}
     </aside>
+    </>
   );
 }
 

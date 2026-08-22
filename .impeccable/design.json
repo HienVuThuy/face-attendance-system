@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-23T00:16:20.000Z",
+  "title": "Design System: IoT Face Attendance System",
+  "extensions": {
+    "colorMeta": {
+      "primary": {
+        "role": "primary",
+        "displayName": "Electric Blue",
+        "canonical": "#3b82f6",
+        "tonalRamp": ["#1e3a8a", "#1e40af", "#1d4ed8", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd", "#dbeafe"]
+      },
+      "sidebar-bg": {
+        "role": "neutral",
+        "displayName": "Midnight Slate",
+        "canonical": "#0f172a",
+        "tonalRamp": ["#020617", "#0f172a", "#1e293b", "#334155", "#475569", "#64748b", "#cbd5e1", "#f1f5f9"]
+      },
+      "surface": {
+        "role": "neutral",
+        "displayName": "Pure White Surface",
+        "canonical": "#ffffff",
+        "tonalRamp": ["#334155", "#475569", "#64748b", "#94a3b8", "#cbd5e1", "#e2e8f0", "#f8fafc", "#ffffff"]
+      },
+      "success": {
+        "role": "accent",
+        "displayName": "Emerald Biometric",
+        "canonical": "#10b981",
+        "tonalRamp": ["#064e3b", "#065f46", "#047857", "#059669", "#10b981", "#34d399", "#a7f3d0", "#d1fae5"]
+      },
+      "warning": {
+        "role": "accent",
+        "displayName": "Amber Late Tag",
+        "canonical": "#f59e0b",
+        "tonalRamp": ["#78350f", "#92400e", "#b45309", "#d97706", "#f59e0b", "#fbbf24", "#fde68a", "#fef3c7"]
+      },
+      "danger": {
+        "role": "accent",
+        "displayName": "Rose Alert",
+        "canonical": "#ef4444",
+        "tonalRamp": ["#7f1d1d", "#991b1b", "#b91c1c", "#dc2626", "#ef4444", "#f87171", "#fca5a5", "#fee2e2"]
+      }
+    },
+    "typographyMeta": {
+      "display": { "displayName": "Display 24px", "purpose": "Page titles and primary summary figures." },
+      "headline": { "displayName": "Headline 20px", "purpose": "Card titles and major modal headers." },
+      "title": { "displayName": "Title 16px", "purpose": "Table headers and card section labels." },
+      "body": { "displayName": "Body 14px", "purpose": "Standard table records, inputs, and descriptions." },
+      "label": { "displayName": "Label 12px", "purpose": "Uppercase badges, field descriptors, and status pills." }
+    },
+    "shadows": [
+      { "name": "card-rest", "value": "0 1px 3px 0 rgba(0, 0, 0, 0.05)", "purpose": "Default separation for content cards." },
+      { "name": "elevated-hover", "value": "0 10px 15px -3px rgba(0, 0, 0, 0.08)", "purpose": "Hover lift for interactive elements." },
+      { "name": "modal-overlay", "value": "0 20px 25px -5px rgba(15, 23, 42, 0.15)", "purpose": "Deep focus for floating modals and dropdowns." }
+    ],
+    "motion": [
+      { "name": "ease-out-standard", "value": "cubic-bezier(0.16, 1, 0.3, 1)", "purpose": "Smooth micro-animations for scale-in and fade-in." }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "lg", "value": "1024px" },
+      { "name": "xl", "value": "1280px" }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Action Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Used for main form submissions, starting live scans, and adding students.",
+      "html": "<button class=\"ds-btn-primary\">+ Thêm Sinh viên mới</button>",
+      "css": ".ds-btn-primary { background: #2563eb; color: #ffffff; padding: 10px 20px; font-family: 'Inter', sans-serif; font-size: 14px; font-weight: 700; border: none; border-radius: 12px; cursor: pointer; box-shadow: 0 1px 2px 0 rgba(37, 99, 235, 0.25); transition: background 0.15s ease, transform 0.15s ease; } .ds-btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }"
+    },
+    {
+      "name": "Status Badge (On-Time / Verified)",
+      "kind": "chip",
+      "refersTo": "badge-success",
+      "description": "Pill indicator for on-time student check-ins and connected IoT devices.",
+      "html": "<span class=\"ds-badge-success\"><span class=\"ds-dot\"></span>Đúng giờ</span>",
+      "css": ".ds-badge-success { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #d1fae5; color: #059669; font-family: 'Inter', sans-serif; font-size: 12px; font-weight: 700; border-radius: 9999px; } .ds-badge-success .ds-dot { width: 6px; height: 6px; background: #10b981; border-radius: 50%; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Intelligent Biometric Sentinel",
+    "overview": "The IoT Face Attendance dashboard visual system is engineered for high-trust institutional and educational operations. It balances a high-tech biometric surveillance aesthetic with the clean, approachable precision of modern SaaS analytics.",
+    "keyCharacteristics": [
+      "High-Contrast Telemetry with clear separation between camera monitors and data tables",
+      "Biometric Color Semantics (Emerald for match/on-time, Amber for late, Rose for stranger)",
+      "Tabular Precision with monospace numbers for timestamps and confidence rates",
+      "Card-First Spatial Model with rounded-2xl geometry"
+    ],
+    "rules": [
+      { "name": "The Strict Semantic Triad Rule", "body": "Never use green for decorative accents; green strictly signals verified recognition or online hardware.", "section": "colors" },
+      { "name": "The Tabular Data Rule", "body": "All timestamps, countdown timers, and student IDs must carry .tabular-nums to eliminate column jitter.", "section": "typography" },
+      { "name": "The Ghost Border Fallback Rule", "body": "Every elevated white card must include a 1px border stroke (border-slate-200/80) to guarantee contrast.", "section": "elevation" }
+    ],
+    "dos": [
+      "Do format all time strings with leading zeros and use .tabular-nums.",
+      "Do render all dialogs and popovers via createPortal(..., document.body) with z-[9999].",
+      "Do preserve the 60-second anti-spam check-in cooldown on real-time face matching loops."
+    ],
+    "donts": [
+      "Don't use pure black (#000000) for text; always use Midnight Slate (#0f172a).",
+      "Don't place fixed-position modals inside elements with CSS transform properties.",
+      "Don't disable scan/recognition action buttons when the database has 0 registered faces."
+    ]
+  }
+}

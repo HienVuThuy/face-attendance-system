@@ -949,7 +949,7 @@ export default function LiveCamera() {
                     type="button"
                     onClick={startRecognition}
                     disabled={!modelsLoaded || !streaming}
-                    className="w-full min-h-[42px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-700 hover:to-indigo-700 focus-visible:ring-2 focus-visible:ring-purple-500 outline-none transition-all shadow-sm shadow-purple-500/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full min-h-[42px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-700 hover:to-blue-700 focus-visible:ring-2 focus-visible:ring-indigo-500 outline-none transition-all shadow-sm shadow-indigo-600/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <Sparkles className="w-4 h-4" /> Nhận diện liên tục (Auto-Scan)
                   </button>

@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bell, ChevronDown, User, LogOut, Settings, ShieldCheck, Mail, Calendar, Key, CheckCircle, X } from 'lucide-react';
+import { Bell, ChevronDown, User, LogOut, Settings, ShieldCheck, Mail, Calendar, Key, CheckCircle, X, Menu } from 'lucide-react';
 import Modal from './Modal';
 import { useToast } from './Toast';
 import { useData } from '../context/DataContext';
@@ -14,7 +14,7 @@ const navTitles = {
   settings: 'Cài đặt hệ thống',
 };
 
-export default function Header({ activeTab, onTabChange, sidebarWidth }) {
+export default function Header({ activeTab, onTabChange, sidebarWidth, isMobile = false, onToggleMobileMenu }) {
   const [showProfile, setShowProfile] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showNotifPopover, setShowNotifPopover] = useState(false);
@@ -64,13 +64,23 @@ export default function Header({ activeTab, onTabChange, sidebarWidth }) {
   return (
     <>
       <header
-        className="fixed top-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 z-40 flex items-center justify-between px-6 transition-all duration-300"
-        style={{ left: sidebarWidth }}
+        className="fixed top-0 right-0 h-16 bg-white/90 backdrop-blur-md border-b border-slate-200/80 z-30 flex items-center justify-between px-4 sm:px-6 transition-all duration-300"
+        style={{ left: isMobile ? 0 : sidebarWidth }}
         role="banner"
       >
-        {/* Left: Page Title */}
-        <div>
-          <h2 className="text-lg font-bold text-slate-800 tracking-tight">
+        {/* Left: Page Title + Mobile Hamburger */}
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          {isMobile && (
+            <button
+              type="button"
+              onClick={onToggleMobileMenu}
+              aria-label="Mở menu điều hướng"
+              className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-xl text-slate-700 hover:bg-slate-100 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 outline-none cursor-pointer"
+            >
+              <Menu className="w-5 h-5" />
+            </button>
+          )}
+          <h2 className="text-base sm:text-lg font-bold text-slate-800 tracking-tight truncate max-w-[180px] sm:max-w-none">
             {navTitles[activeTab] || 'Dashboard'}
           </h2>
         </div>
