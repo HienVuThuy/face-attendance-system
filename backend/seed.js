@@ -41,6 +41,31 @@ const studentTx = db.transaction((students) => {
 studentTx(initialStudents);
 console.log(`✅ Đã nạp ${initialStudents.length} sinh viên.`);
 
+// 1b. Thời khoá biểu (Ca học mẫu)
+const initialSessions = [
+  { name: 'Ca Sáng',  subject: 'Lập trình di động',    room: 'A2-301', day_of_week: 1, start_time: '07:00', end_time: '09:30', late_after: '07:15' },
+  { name: 'Ca Chiều', subject: 'Mạng máy tính',        room: 'A2-302', day_of_week: 1, start_time: '13:00', end_time: '15:30', late_after: '13:15' },
+  { name: 'Ca Sáng',  subject: 'Cơ sở dữ liệu',       room: 'B3-201', day_of_week: 2, start_time: '07:00', end_time: '09:30', late_after: '07:15' },
+  { name: 'Ca Chiều', subject: 'Trí tuệ nhân tạo',     room: 'B3-202', day_of_week: 2, start_time: '13:00', end_time: '15:30', late_after: '13:15' },
+  { name: 'Ca Sáng',  subject: 'Lập trình di động',    room: 'A2-301', day_of_week: 3, start_time: '07:00', end_time: '09:30', late_after: '07:15' },
+  { name: 'Ca Sáng',  subject: 'Hệ điều hành',         room: 'C1-101', day_of_week: 4, start_time: '07:00', end_time: '09:30', late_after: '07:15' },
+  { name: 'Ca Chiều', subject: 'Mạng máy tính',        room: 'A2-302', day_of_week: 4, start_time: '13:00', end_time: '15:30', late_after: '13:15' },
+  { name: 'Ca Sáng',  subject: 'IoT & Hệ thống nhúng', room: 'D4-401', day_of_week: 5, start_time: '07:00', end_time: '09:30', late_after: '07:15' },
+];
+
+const insertSession = db.prepare(`
+  INSERT INTO sessions (name, subject, room, day_of_week, start_time, end_time, late_after, is_active)
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+`);
+
+const sessionTx = db.transaction((sessions) => {
+  for (const s of sessions) {
+    insertSession.run(s.name, s.subject, s.room, s.day_of_week, s.start_time, s.end_time, s.late_after, 1);
+  }
+});
+sessionTx(initialSessions);
+console.log(`✅ Đã nạp ${initialSessions.length} ca học (thời khoá biểu).`);
+
 // 2. Lịch sử điểm danh 7 ngày
 function daysAgo(n, h, m) {
   const d = new Date();

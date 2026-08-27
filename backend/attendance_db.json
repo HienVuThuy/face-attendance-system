@@ -139,590 +139,150 @@
   ],
   "attendance_logs": [
     {
-      "id": 56,
+      "id": 97,
       "student_id": "B21DCCN001",
-      "timestamp": 1786578613000,
-      "status": "on-time",
-      "confidence": 98.7
-    },
-    {
-      "id": 60,
-      "student_id": "B21DCCN010",
-      "timestamp": 1786579233000,
-      "status": "on-time",
-      "confidence": 98
-    },
-    {
-      "id": 61,
-      "student_id": "B21DCCN011",
-      "timestamp": 1786579431000,
-      "status": "on-time",
-      "confidence": 98.2
-    },
-    {
-      "id": 58,
-      "student_id": "B21DCCN005",
-      "timestamp": 1786579518000,
-      "status": "on-time",
-      "confidence": 96.5
-    },
-    {
-      "id": 57,
-      "student_id": "B21DCCN003",
-      "timestamp": 1786579816000,
-      "status": "on-time",
-      "confidence": 97.6
-    },
-    {
-      "id": 62,
-      "student_id": "B21DCCN013",
-      "timestamp": 1786580535000,
+      "timestamp": 1787533800000,
       "status": "late",
-      "confidence": 94
+      "confidence": 96,
+      "session_id": 1
     },
     {
-      "id": 59,
-      "student_id": "B21DCCN007",
-      "timestamp": 1786580881000,
-      "status": "late",
-      "confidence": 93.5
-    },
-    {
-      "id": 54,
-      "student_id": "B21DCCN015",
-      "timestamp": 1786665326000,
-      "status": "on-time",
-      "confidence": 98.5
-    },
-    {
-      "id": 49,
+      "id": 98,
       "student_id": "B21DCCN001",
-      "timestamp": 1786665653000,
+      "timestamp": 1787551800000,
       "status": "on-time",
-      "confidence": 98.1
+      "confidence": 95,
+      "session_id": 2
     },
     {
-      "id": 50,
-      "student_id": "B21DCCN002",
-      "timestamp": 1786665827000,
-      "status": "on-time",
-      "confidence": 98.8
-    },
-    {
-      "id": 52,
-      "student_id": "B21DCCN009",
-      "timestamp": 1786666096000,
-      "status": "on-time",
-      "confidence": 97.8
-    },
-    {
-      "id": 53,
-      "student_id": "B21DCCN014",
-      "timestamp": 1786666553000,
-      "status": "on-time",
-      "confidence": 96.9
-    },
-    {
-      "id": 51,
-      "student_id": "B21DCCN006",
-      "timestamp": 1786666800000,
+      "id": 95,
+      "student_id": "23111",
+      "timestamp": 1787556151895,
       "status": "late",
-      "confidence": 94.7
+      "confidence": 62,
+      "session_id": 2
     },
     {
-      "id": 55,
-      "student_id": "B21DCCN016",
-      "timestamp": 1786667400000,
+      "id": 96,
+      "student_id": "23111",
+      "timestamp": 1787557625783,
       "status": "late",
-      "confidence": 92.9
-    },
-    {
-      "id": 46,
-      "student_id": "B21DCCN010",
-      "timestamp": 1786751566000,
-      "status": "on-time",
-      "confidence": 97.5
-    },
-    {
-      "id": 42,
-      "student_id": "B21DCCN001",
-      "timestamp": 1786751926000,
-      "status": "on-time",
-      "confidence": 98.6
-    },
-    {
-      "id": 45,
-      "student_id": "B21DCCN007",
-      "timestamp": 1786752028000,
-      "status": "on-time",
-      "confidence": 96.8
-    },
-    {
-      "id": 43,
-      "student_id": "B21DCCN003",
-      "timestamp": 1786752318000,
-      "status": "on-time",
-      "confidence": 97.3
-    },
-    {
-      "id": 47,
-      "student_id": "B21DCCN011",
-      "timestamp": 1786752734000,
-      "status": "on-time",
-      "confidence": 98.4
-    },
-    {
-      "id": 44,
-      "student_id": "B21DCCN005",
-      "timestamp": 1786753136000,
-      "status": "late",
-      "confidence": 94.1
-    },
-    {
-      "id": 48,
-      "student_id": "B21DCCN013",
-      "timestamp": 1786753539000,
-      "status": "late",
-      "confidence": 93.2
-    },
-    {
-      "id": 38,
-      "student_id": "B21DCCN009",
-      "timestamp": 1786838134000,
-      "status": "on-time",
-      "confidence": 98
-    },
-    {
-      "id": 35,
-      "student_id": "B21DCCN002",
-      "timestamp": 1786838453000,
-      "status": "on-time",
-      "confidence": 99.2
-    },
-    {
-      "id": 41,
-      "student_id": "B21DCCN016",
-      "timestamp": 1786838480000,
-      "status": "on-time",
-      "confidence": 97.5
-    },
-    {
-      "id": 34,
-      "student_id": "B21DCCN001",
-      "timestamp": 1786838578000,
-      "status": "on-time",
-      "confidence": 97.9
-    },
-    {
-      "id": 37,
-      "student_id": "B21DCCN006",
-      "timestamp": 1786838881000,
-      "status": "on-time",
-      "confidence": 97
-    },
-    {
-      "id": 39,
-      "student_id": "B21DCCN010",
-      "timestamp": 1786839325000,
-      "status": "on-time",
-      "confidence": 96.2
-    },
-    {
-      "id": 36,
-      "student_id": "B21DCCN005",
-      "timestamp": 1786839741000,
-      "status": "late",
-      "confidence": 93.8
-    },
-    {
-      "id": 40,
-      "student_id": "B21DCCN014",
-      "timestamp": 1786840243000,
-      "status": "late",
-      "confidence": 92.7
-    },
-    {
-      "id": 30,
-      "student_id": "B21DCCN009",
-      "timestamp": 1786924200000,
-      "status": "on-time",
-      "confidence": 98.3
-    },
-    {
-      "id": 25,
-      "student_id": "B21DCCN001",
-      "timestamp": 1786924501000,
-      "status": "on-time",
-      "confidence": 98.4
-    },
-    {
-      "id": 27,
-      "student_id": "B21DCCN003",
-      "timestamp": 1786924833000,
-      "status": "on-time",
-      "confidence": 97.1
-    },
-    {
-      "id": 32,
-      "student_id": "B21DCCN013",
-      "timestamp": 1786924946000,
-      "status": "on-time",
-      "confidence": 95
-    },
-    {
-      "id": 31,
-      "student_id": "B21DCCN011",
-      "timestamp": 1786925157000,
-      "status": "on-time",
-      "confidence": 98.5
-    },
-    {
-      "id": 28,
-      "student_id": "B21DCCN006",
-      "timestamp": 1786925440000,
-      "status": "on-time",
-      "confidence": 96.5
-    },
-    {
-      "id": 26,
-      "student_id": "B21DCCN002",
-      "timestamp": 1786925688000,
-      "status": "on-time",
-      "confidence": 98.9
-    },
-    {
-      "id": 33,
-      "student_id": "B21DCCN015",
-      "timestamp": 1786925886000,
-      "status": "late",
-      "confidence": 94.5
-    },
-    {
-      "id": 29,
-      "student_id": "B21DCCN007",
-      "timestamp": 1786926501000,
-      "status": "late",
-      "confidence": 93
-    },
-    {
-      "id": 14,
-      "student_id": "B21DCCN001",
-      "timestamp": 1787010741000,
-      "status": "on-time",
-      "confidence": 98.2
-    },
-    {
-      "id": 19,
-      "student_id": "B21DCCN009",
-      "timestamp": 1787011080000,
-      "status": "on-time",
-      "confidence": 98.1
-    },
-    {
-      "id": 15,
-      "student_id": "B21DCCN002",
-      "timestamp": 1787011218000,
-      "status": "on-time",
-      "confidence": 99
-    },
-    {
-      "id": 23,
-      "student_id": "B21DCCN014",
-      "timestamp": 1787011288000,
-      "status": "on-time",
-      "confidence": 97
-    },
-    {
-      "id": 21,
-      "student_id": "B21DCCN011",
-      "timestamp": 1787011420000,
-      "status": "on-time",
-      "confidence": 98.6
-    },
-    {
-      "id": 17,
-      "student_id": "B21DCCN005",
-      "timestamp": 1787011508000,
-      "status": "on-time",
-      "confidence": 96.3
-    },
-    {
-      "id": 22,
-      "student_id": "B21DCCN013",
-      "timestamp": 1787011719000,
-      "status": "on-time",
-      "confidence": 95.8
-    },
-    {
-      "id": 18,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787011945000,
-      "status": "on-time",
-      "confidence": 97.4
-    },
-    {
-      "id": 16,
-      "student_id": "B21DCCN003",
-      "timestamp": 1787012402000,
-      "status": "late",
-      "confidence": 95.1
-    },
-    {
-      "id": 20,
-      "student_id": "B21DCCN010",
-      "timestamp": 1787012710000,
-      "status": "late",
-      "confidence": 94
-    },
-    {
-      "id": 24,
-      "student_id": "B21DCCN016",
-      "timestamp": 1787013173000,
-      "status": "late",
-      "confidence": 92.5
-    },
-    {
-      "id": 8,
-      "student_id": "B21DCCN010",
-      "timestamp": 1787097045000,
-      "status": "on-time",
-      "confidence": 97.2
-    },
+      "confidence": 54,
+      "session_id": 2
+    }
+  ],
+  "sessions": [
     {
       "id": 1,
-      "student_id": "B21DCCN001",
-      "timestamp": 1787097348000,
-      "status": "on-time",
-      "confidence": 98.5
+      "name": "Ca Sáng",
+      "subject": "Lập trình di động",
+      "room": "A2-301",
+      "day_of_week": 1,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     },
     {
       "id": 2,
-      "student_id": "B21DCCN002",
-      "timestamp": 1787097480000,
-      "status": "on-time",
-      "confidence": 99.1
-    },
-    {
-      "id": 7,
-      "student_id": "B21DCCN009",
-      "timestamp": 1787097612000,
-      "status": "on-time",
-      "confidence": 98
-    },
-    {
-      "id": 13,
-      "student_id": "B21DCCN016",
-      "timestamp": 1787097711000,
-      "status": "on-time",
-      "confidence": 97.9
+      "name": "Ca Chiều",
+      "subject": "Mạng máy tính",
+      "room": "A2-302",
+      "day_of_week": 1,
+      "start_time": "13:00",
+      "end_time": "15:30",
+      "late_after": "13:15",
+      "is_active": 1
     },
     {
       "id": 3,
-      "student_id": "B21DCCN003",
-      "timestamp": 1787097727000,
-      "status": "on-time",
-      "confidence": 97.5
-    },
-    {
-      "id": 11,
-      "student_id": "B21DCCN014",
-      "timestamp": 1787097791000,
-      "status": "on-time",
-      "confidence": 96.5
-    },
-    {
-      "id": 5,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787097915000,
-      "status": "on-time",
-      "confidence": 96.8
-    },
-    {
-      "id": 10,
-      "student_id": "B21DCCN013",
-      "timestamp": 1787098108000,
-      "status": "on-time",
-      "confidence": 95.3
-    },
-    {
-      "id": 9,
-      "student_id": "B21DCCN011",
-      "timestamp": 1787098212000,
-      "status": "on-time",
-      "confidence": 98.7
+      "name": "Ca Sáng",
+      "subject": "Cơ sở dữ liệu",
+      "room": "B3-201",
+      "day_of_week": 2,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     },
     {
       "id": 4,
-      "student_id": "B21DCCN005",
-      "timestamp": 1787098920000,
-      "status": "late",
-      "confidence": 94.2
+      "name": "Ca Chiều",
+      "subject": "Trí tuệ nhân tạo",
+      "room": "B3-202",
+      "day_of_week": 2,
+      "start_time": "13:00",
+      "end_time": "15:30",
+      "late_after": "13:15",
+      "is_active": 1
     },
     {
-      "id": 12,
-      "student_id": "B21DCCN015",
-      "timestamp": 1787099298000,
-      "status": "late",
-      "confidence": 93.4
+      "id": 5,
+      "name": "Ca Sáng",
+      "subject": "Lập trình di động",
+      "room": "A2-301",
+      "day_of_week": 3,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     },
     {
       "id": 6,
-      "student_id": "B21DCCN007",
-      "timestamp": 1787099733000,
-      "status": "late",
-      "confidence": 92.1
+      "name": "Ca Sáng",
+      "subject": "Hệ điều hành",
+      "room": "C1-101",
+      "day_of_week": 4,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     },
     {
-      "id": 63,
-      "student_id": "B21DCCN005",
-      "timestamp": 1787157639715,
-      "status": "on-time",
-      "confidence": 99.9
+      "id": 7,
+      "name": "Ca Chiều",
+      "subject": "Mạng máy tính",
+      "room": "A2-302",
+      "day_of_week": 4,
+      "start_time": "13:00",
+      "end_time": "15:30",
+      "late_after": "13:15",
+      "is_active": 1
     },
     {
-      "id": 64,
-      "student_id": "23111",
-      "timestamp": 1787240767681,
-      "status": "on-time",
-      "confidence": 64
+      "id": 8,
+      "name": "Ca Sáng",
+      "subject": "IoT & Hệ thống nhúng",
+      "room": "D4-401",
+      "day_of_week": 5,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     },
     {
-      "id": 65,
-      "student_id": "23111",
-      "timestamp": 1787240828539,
-      "status": "on-time",
-      "confidence": 70
-    },
-    {
-      "id": 66,
-      "student_id": "23111",
-      "timestamp": 1787240889419,
-      "status": "on-time",
-      "confidence": 66
-    },
-    {
-      "id": 69,
-      "student_id": "B21DCCN007",
-      "timestamp": 1787241090295,
-      "status": "late",
-      "confidence": 62
-    },
-    {
-      "id": 72,
-      "student_id": "23111",
-      "timestamp": 1787241289835,
-      "status": "on-time",
-      "confidence": 79
-    },
-    {
-      "id": 73,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787241291586,
-      "status": "late",
-      "confidence": 50
-    },
-    {
-      "id": 74,
-      "student_id": "23111",
-      "timestamp": 1787241351249,
-      "status": "on-time",
-      "confidence": 67
-    },
-    {
-      "id": 75,
-      "student_id": "23111",
-      "timestamp": 1787241922624,
-      "status": "on-time",
-      "confidence": 55
-    },
-    {
-      "id": 76,
-      "student_id": "23111",
-      "timestamp": 1787272069310,
-      "status": "late",
-      "confidence": 64
-    },
-    {
-      "id": 77,
-      "student_id": "23111",
-      "timestamp": 1787272339382,
-      "status": "late",
-      "confidence": 61
-    },
-    {
-      "id": 78,
-      "student_id": "23111",
-      "timestamp": 1787273333075,
-      "status": "on-time",
-      "confidence": 60
-    },
-    {
-      "id": 79,
-      "student_id": "23111",
-      "timestamp": 1787273434019,
-      "status": "late",
-      "confidence": 44
-    },
-    {
-      "id": 80,
-      "student_id": "23111",
-      "timestamp": 1787327780076,
-      "status": "late",
-      "confidence": 60
-    },
-    {
-      "id": 81,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787327816856,
-      "status": "late",
-      "confidence": 31
-    },
-    {
-      "id": 82,
-      "student_id": "23111",
-      "timestamp": 1787327840171,
-      "status": "late",
-      "confidence": 63
-    },
-    {
-      "id": 83,
-      "student_id": "23111",
-      "timestamp": 1787327942813,
-      "status": "late",
-      "confidence": 69
-    },
-    {
-      "id": 84,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787327968356,
-      "status": "late",
-      "confidence": 42
-    },
-    {
-      "id": 85,
-      "student_id": "23111",
-      "timestamp": 1787328002908,
-      "status": "late",
-      "confidence": 56
-    },
-    {
-      "id": 86,
-      "student_id": "B21DCCN006",
-      "timestamp": 1787328032728,
-      "status": "late",
-      "confidence": 40
+      "id": 9,
+      "name": "Ca Sáng",
+      "subject": "hggf",
+      "room": "hgfr",
+      "day_of_week": 6,
+      "start_time": "07:00",
+      "end_time": "09:30",
+      "late_after": "07:15",
+      "is_active": 1
     }
   ],
   "settings": {
-    "shiftStart": "07:00",
-    "lateThreshold": "08:15",
-    "espCamIp": "10.194.11.34",
-    "espDevkitIp": "192.168.1.101",
+    "espCamIp": "192.168.100.178",
     "faceThreshold": "0.5",
+    "language": "en",
+    "timezone": "Asia/Ho_Chi_Minh",
+    "shiftStart": "07:00",
+    "lateThreshold": "07:15",
+    "espDevkitIp": "192.168.1.101",
     "autoOpenDoor": "true",
-    "doorOpenDuration": "5",
-    "language": "vi",
-    "timezone": "Asia/Ho_Chi_Minh"
+    "doorOpenDuration": "5"
   },
-  "nextLogId": 87
+  "nextLogId": 99,
+  "nextSessionId": 10
 }

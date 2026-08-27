@@ -6,6 +6,7 @@ import { DataProvider } from './context/DataContext';
 import Dashboard from './pages/Dashboard';
 import LiveCamera from './pages/LiveCamera';
 import StudentManagement from './pages/StudentManagement';
+import SessionManagement from './pages/SessionManagement';
 import AttendanceLogs from './pages/AttendanceLogs';
 import TimesheetReports from './pages/TimesheetReports';
 import Settings from './pages/Settings';
@@ -14,12 +15,13 @@ const pages = {
   dashboard: Dashboard,
   camera: LiveCamera,
   students: StudentManagement,
+  sessions: SessionManagement,
   logs: AttendanceLogs,
   timesheet: TimesheetReports,
   settings: Settings,
 };
 
-const tabOrder = ['dashboard', 'camera', 'students', 'logs', 'timesheet', 'settings'];
+const tabOrder = ['dashboard', 'camera', 'students', 'sessions', 'logs', 'timesheet', 'settings'];
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -60,9 +62,9 @@ export default function App() {
         return;
       }
 
-      // Keys 1 - 6 to quickly switch tabs
+      // Keys 1 - 7 to quickly switch tabs
       const num = parseInt(e.key, 10);
-      if (num >= 1 && num <= 6) {
+      if (num >= 1 && num <= 7) {
         setActiveTab(tabOrder[num - 1]);
         if (isMobile) {
           setMobileDrawerOpen(false);

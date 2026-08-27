@@ -17,6 +17,7 @@ import path from 'path';
 import fs from 'fs';
 import { fileURLToPath } from 'url';
 import db from '../database.js';
+import { broadcastAttendanceEvent } from './attendance.js';
 
 const router = Router();
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -155,6 +156,8 @@ router.post('/', (req, res) => {
     'INSERT INTO students (id, name, lop, face_descriptors, avatar_path, created_at) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(cleanId, name.trim(), (lop || '').trim(), descriptorsJson, savedAvatarPath, Date.now());
 
+  broadcastAttendanceEvent('students_updated', { action: 'create', id: cleanId });
+
   res.status(201).json({
     message: 'Đã thêm sinh viên thành công',
     id: cleanId,
@@ -197,6 +200,8 @@ router.put('/:id', (req, res) => {
       .run(req.params.id);
   }
 
+  broadcastAttendanceEvent('students_updated', { action: 'update', id: req.params.id });
+
   res.json({ message: 'Đã cập nhật sinh viên' });
 });
 
@@ -206,6 +211,9 @@ router.delete('/:id', (req, res) => {
   if (result.changes === 0) {
     return res.status(404).json({ error: 'Sinh viên không tồn tại' });
   }
+
+  broadcastAttendanceEvent('students_updated', { action: 'delete', id: req.params.id });
+
   res.json({ message: 'Đã xóa sinh viên' });
 });
 
@@ -231,6 +239,8 @@ router.post('/:id/descriptors', (req, res) => {
   db.prepare('UPDATE students SET face_descriptors = ? WHERE id = ?')
     .run(JSON.stringify(descriptors), req.params.id);
 
+  broadcastAttendanceEvent('students_updated', { action: 'descriptors', id: req.params.id });
+
   res.json({
     message: `Đã thêm descriptor (tổng: ${descriptors.length})`,
     count: descriptors.length,
@@ -247,6 +257,8 @@ router.post('/:id/avatar', upload.single('avatar'), (req, res) => {
   const avatarPath = req.file.path;
   db.prepare('UPDATE students SET avatar_path = ? WHERE id = ?')
     .run(avatarPath, req.params.id);
+
+  broadcastAttendanceEvent('students_updated', { action: 'avatar', id: req.params.id });
 
   res.json({
     message: 'Đã upload ảnh chân dung',

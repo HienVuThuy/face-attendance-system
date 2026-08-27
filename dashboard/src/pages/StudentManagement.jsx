@@ -6,8 +6,8 @@ import { useToast } from '../components/Toast';
 import { useData } from '../context/DataContext';
 import { getInitials } from '../utils/helpers';
 
-// Weights URL
-const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+// Weights URL (lưu cục bộ trong public/models)
+const MODEL_URL = '/models';
 
 export default function StudentManagement() {
   const { students, addStudent, updateStudent, deleteStudent, addStudentDescriptor, refreshAll } = useData();

@@ -29,7 +29,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 export default function Dashboard() {
-  const { stats, logs, weeklyData, pieData, backendOnline, refreshAll } = useData();
+  const { stats, logs, weeklyData, pieData, backendOnline, refreshAll, lastSyncTime, syncMode } = useData();
   const { addToast } = useToast();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -59,17 +59,20 @@ export default function Dashboard() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-400/20 via-transparent to-transparent pointer-events-none" />
         
         <div className="relative z-10">
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex flex-wrap items-center gap-2 mb-2">
             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-xs font-semibold text-blue-100 border border-white/20">
               <Sparkles className="w-3.5 h-3.5 text-blue-200" /> Hệ thống IoT Trực tuyến
             </span>
-            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-400/30">
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-semibold border border-emerald-400/30">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse-dot" /> Backend: {backendOnline ? 'Đã kết nối' : 'Đang kết nối...'}
+            </span>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-200 text-xs font-semibold border border-cyan-400/30">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse-dot" /> {syncMode === 'sse' ? 'SSE Real-time' : 'Auto-Sync'} • {formatTime(lastSyncTime)}
             </span>
           </div>
           <h2 className="text-xl md:text-2xl font-black tracking-tight">Hệ Thống Điểm Danh & Nhận Diện Khuôn Mặt IoT</h2>
           <p className="text-blue-100 text-sm mt-1 max-w-xl">
-            Tự động nhận diện sinh trắc học qua camera AI ESP32-CAM và ghi nhận thời gian thực với độ chính xác cao.
+            Tự động nhận diện sinh trắc học qua camera AI ESP32-CAM và cập nhật số liệu thời gian thực không cần tải lại trang.
           </p>
         </div>
 

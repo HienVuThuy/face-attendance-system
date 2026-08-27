@@ -7,7 +7,7 @@ echo ========================================================
 echo.
 
 echo [1/3] Khoi dong Backend Server (Port 3001)...
-start "IoT_Backend" /D "%~dp0backend" cmd /k "node server.js"
+start "IoT_Backend" /D "%~dp0backend" cmd /k "node --watch server.js"
 
 timeout /t 2 /nobreak > nul
 

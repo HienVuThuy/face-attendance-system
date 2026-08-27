@@ -9,6 +9,7 @@ const navTitles = {
   dashboard: 'Tổng quan',
   camera: 'Camera Nhận diện',
   students: 'Quản lý Sinh viên',
+  sessions: 'Quản lý Ca học (Thời khoá biểu)',
   logs: 'Lịch sử Điểm danh',
   timesheet: 'Chấm công & Báo cáo',
   settings: 'Cài đặt hệ thống',

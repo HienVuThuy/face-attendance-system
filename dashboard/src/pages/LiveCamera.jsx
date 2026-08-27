@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Square, DoorOpen, Wifi, Activity, Cpu, Zap, Radio, RefreshCw, Eye, Sparkles, AlertCircle, Video, Camera, ScanFace, Loader2, UserCheck, PlusCircle } from 'lucide-react';
+import { Play, Square, Wifi, Activity, Cpu, Zap, Radio, RefreshCw, Eye, Sparkles, AlertCircle, Video, Camera, ScanFace, Loader2, UserCheck, PlusCircle } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import { useToast } from '../components/Toast';
@@ -7,12 +7,12 @@ import { useData } from '../context/DataContext';
 import { formatTime, getInitials } from '../utils/helpers';
 
 // ============================================================
-// URL tải AI Models (face-api.js weights)
+// URL tải AI Models (face-api.js weights lưu cục bộ trong public/models)
 // ============================================================
-const MODEL_URL = 'https://cdn.jsdelivr.net/gh/justadudewhohacks/face-api.js@master/weights';
+const MODEL_URL = '/models';
 
 export default function LiveCamera() {
-  const { students, logs, addAttendanceLog, settings, unlockDoor, checkDeviceStatus, fetchStudents } = useData();
+  const { students, logs, addAttendanceLog, settings, checkDeviceStatus, fetchStudents, currentSession, fetchCurrentSession } = useData();
   const { addToast } = useToast();
 
   // ── Camera & Stream State ──
@@ -57,11 +57,6 @@ export default function LiveCamera() {
   const recognizeLoopRef = useRef(null);
   const recognizingRef = useRef(false);
   const lastSeenRef = useRef({});          // Chống ghi trùng 60s
-
-  // ── Relay Countdown ──
-  const [doorOpenTimeLeft, setDoorOpenTimeLeft] = useState(0);
-  const [doorSimulated, setDoorSimulated] = useState(false);
-  const doorTimerRef = useRef(null);
 
   // Live recognition event list (last 8 recognized)
   const recentRecognitions = logs.slice(0, 8);
@@ -186,7 +181,28 @@ export default function LiveCamera() {
   }, [refreshDeviceStatus]);
 
   // ═══════════════════════════════════════════════════════════
-  // 4. CAMERA STREAM (ESP32-CAM MJPEG hoặc Webcam)
+  // 4. STOP RECOGNITION HELPER
+  // ═══════════════════════════════════════════════════════════
+  const stopRecognition = useCallback((silent = false) => {
+    setRecognizing(false);
+    recognizingRef.current = false;
+    if (recognizeLoopRef.current) {
+      cancelAnimationFrame(recognizeLoopRef.current);
+      clearTimeout(recognizeLoopRef.current);
+      recognizeLoopRef.current = null;
+    }
+    if (canvasOverlayRef.current) {
+      const ctx = canvasOverlayRef.current.getContext('2d');
+      ctx.clearRect(0, 0, canvasOverlayRef.current.width, canvasOverlayRef.current.height);
+    }
+    setDetectedFaces([]);
+    if (!silent) {
+      addToast('Đã dừng nhận diện liên tục', 'info');
+    }
+  }, [addToast]);
+
+  // ═══════════════════════════════════════════════════════════
+  // 5. CAMERA STREAM (ESP32-CAM MJPEG hoặc Webcam)
   // ═══════════════════════════════════════════════════════════
   const handleStart = async (source = streamSource) => {
     setCameraError(false);
@@ -233,16 +249,12 @@ export default function LiveCamera() {
 
   useEffect(() => {
     return () => {
+      stopRecognition(true);
       if (webcamStreamRef.current) {
-        webcamStreamRef.current.getTracks().forEach(t => t.stop());
+        webcamStreamRef.current.getTracks().forEach(track => track.stop());
       }
-      if (recognizeLoopRef.current) {
-        cancelAnimationFrame(recognizeLoopRef.current);
-        clearTimeout(recognizeLoopRef.current);
-      }
-      if (doorTimerRef.current) clearInterval(doorTimerRef.current);
     };
-  }, []);
+  }, [stopRecognition]);
 
   // ═══════════════════════════════════════════════════════════
   // 5. NHẬN DIỆN KHUÔN MẶT THẬT (face-api.js)
@@ -434,22 +446,6 @@ export default function LiveCamera() {
     loop();
   };
 
-  const stopRecognition = () => {
-    setRecognizing(false);
-    recognizingRef.current = false;
-    if (recognizeLoopRef.current) {
-      cancelAnimationFrame(recognizeLoopRef.current);
-      clearTimeout(recognizeLoopRef.current);
-      recognizeLoopRef.current = null;
-    }
-    if (canvasOverlayRef.current) {
-      const ctx = canvasOverlayRef.current.getContext('2d');
-      ctx.clearRect(0, 0, canvasOverlayRef.current.width, canvasOverlayRef.current.height);
-    }
-    setDetectedFaces([]);
-    addToast('Đã dừng nhận diện liên tục', 'info');
-  };
-
   /**
    * Vẽ bounding box + label lên canvas overlay
    */
@@ -527,10 +523,6 @@ export default function LiveCamera() {
         const log = res.log || {};
         const statusText = log.status === 'on-time' ? 'Đúng giờ' : 'Đi muộn';
         addToast(`✅ AI Điểm danh: ${svName} (${studentId}) — ${confidence}% — ${statusText}`, 'success');
-
-        if (settings.autoOpenDoor) {
-          handleOpenDoor();
-        }
       }
     } catch (err) {
       addToast('Lỗi ghi nhận điểm danh: ' + err.message, 'error');
@@ -597,56 +589,47 @@ export default function LiveCamera() {
   };
 
   // ═══════════════════════════════════════════════════════════
-  // 7. MỞ CỬA (Relay)
-  // ═══════════════════════════════════════════════════════════
-  const handleOpenDoor = async () => {
-    const duration = settings.doorOpenDuration || 5;
-    setDoorOpenTimeLeft(duration);
-    setDoorSimulated(false);
-
-    if (doorTimerRef.current) clearInterval(doorTimerRef.current);
-
-    doorTimerRef.current = setInterval(() => {
-      setDoorOpenTimeLeft(prev => {
-        if (prev <= 1) {
-          clearInterval(doorTimerRef.current);
-          addToast('Khóa cửa điện từ đã đóng lại (Relay OFF)', 'info');
-          return 0;
-        }
-        return prev - 1;
-      });
-    }, 1000);
-
-    const res = await unlockDoor(duration);
-    if (res.success) {
-      setDoorSimulated(false);
-      addToast(`Đã gửi lệnh mở relay tới ESP32 DevKit (${duration}s)`, 'success');
-    } else {
-      setDoorSimulated(true);
-      addToast(`⚠️ [MÔ PHỎNG] Mở cửa ảo ${duration}s — ESP32 DevKit offline`, 'info');
-    }
-  };
-
-  // ═══════════════════════════════════════════════════════════
   // RENDER
   // ═══════════════════════════════════════════════════════════
   return (
     <div className="space-y-5 animate-fade-in">
-      {/* Door Open Banner Alert */}
-      {doorOpenTimeLeft > 0 && (
-        <div className={`${doorSimulated ? 'bg-amber-500' : 'bg-emerald-500'} text-white px-5 py-3 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in`}>
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-white animate-pulse" />
-            <span className="text-sm font-bold tracking-wide">
-              {doorSimulated
-                ? '⚠️ [MÔ PHỎNG] RƠ-LE MỞ CỬA (ESP32 DevKit Offline)'
-                : '🚪 RƠ-LE ĐANG MỞ CỬA CHO PHÉP ĐI VÀO'}
+      {/* ★ Current Session Status Banner */}
+      {currentSession && (
+        currentSession.active ? (
+          <div className="bg-gradient-to-r from-emerald-500 to-teal-500 text-white px-5 py-3.5 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-3 min-w-0">
+              <span className="w-3 h-3 rounded-full bg-white animate-pulse flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold tracking-wide truncate">
+                  {currentSession.session.name} — {currentSession.session.subject}
+                </p>
+                <p className="text-xs text-emerald-100">
+                  {currentSession.currentDayName} • {currentSession.session.start_time} – {currentSession.session.end_time} • Phòng {currentSession.session.room}
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full flex-shrink-0">
+              Đang diễn ra
             </span>
           </div>
-          <span className={`font-mono text-sm font-black ${doorSimulated ? 'bg-amber-600/60' : 'bg-emerald-600/60'} px-3 py-1 rounded-lg border ${doorSimulated ? 'border-amber-400' : 'border-emerald-400'}`}>
-            Tự động khóa sau: {doorOpenTimeLeft}s
-          </span>
-        </div>
+        ) : (
+          <div className="bg-gradient-to-r from-amber-500 to-orange-500 text-white px-5 py-3.5 rounded-2xl shadow-lg flex items-center justify-between animate-fade-in">
+            <div className="flex items-center gap-3 min-w-0">
+              <AlertCircle className="w-5 h-5 flex-shrink-0" />
+              <div className="min-w-0">
+                <p className="text-sm font-bold tracking-wide">
+                  Ngoài giờ học — Không có ca học nào đang diễn ra
+                </p>
+                <p className="text-xs text-amber-100">
+                  {currentSession.currentDayName} • {currentSession.currentTime} — Điểm danh sẽ bị từ chối
+                </p>
+              </div>
+            </div>
+            <span className="text-xs font-semibold bg-white/20 px-3 py-1 rounded-full flex-shrink-0">
+              Tạm dừng
+            </span>
+          </div>
+        )
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-5">
@@ -670,15 +653,14 @@ export default function LiveCamera() {
                 </span>
 
                 {/* AI Model status */}
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                  modelsLoaded
+                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${modelsLoaded
                     ? (registeredFaceCount > 0
-                        ? 'bg-emerald-900/40 text-emerald-400 border-emerald-700'
-                        : 'bg-amber-900/40 text-amber-300 border-amber-700')
+                      ? 'bg-emerald-900/40 text-emerald-400 border-emerald-700'
+                      : 'bg-amber-900/40 text-amber-300 border-amber-700')
                     : modelsLoading
                       ? 'bg-amber-900/40 text-amber-400 border-amber-700'
                       : 'bg-slate-800 text-slate-400 border-slate-700'
-                }`}>
+                  }`}>
                   {modelsLoaded
                     ? (registeredFaceCount > 0 ? `● AI READY (${registeredFaceCount} SV)` : '● AI CHƯA CÓ DỮ LIỆU')
                     : modelsLoading ? '⏳ LOADING AI...' : '○ AI OFF'}
@@ -751,22 +733,38 @@ export default function LiveCamera() {
 
                   {/* Camera Error Message Overlay */}
                   {cameraError && streamSource === 'esp32' && (
-                    <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-20">
+                    <div className="absolute inset-0 bg-slate-950/90 flex flex-col items-center justify-center p-6 text-center z-20 animate-fade-in">
                       <AlertCircle className="w-12 h-12 text-amber-500 mb-3 animate-pulse" />
                       <p className="text-white font-bold text-sm">Không thể kết nối luồng ESP32-CAM</p>
                       <p className="text-slate-400 text-xs mt-1 max-w-md font-mono">
                         URL: {espStreamUrl}
                       </p>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setCameraError(false);
-                          if (espImgRef.current) espImgRef.current.src = espStreamUrl + '?t=' + Date.now();
-                        }}
-                        className="mt-4 px-4 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold transition-colors cursor-pointer"
-                      >
-                        Thử kết nối lại
-                      </button>
+                      <p className="text-slate-500 text-[11px] mt-1">
+                        Module ESP32-CAM chưa bật nguồn hoặc chưa kết nối chung mạng WiFi
+                      </p>
+                      <div className="flex items-center gap-3 mt-4 flex-wrap justify-center">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStreamSource('webcam');
+                            handleStop();
+                            handleStart('webcam');
+                          }}
+                          className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+                        >
+                          <Camera className="w-3.5 h-3.5" /> Chuyển sang Webcam máy tính ngay
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCameraError(false);
+                            if (espImgRef.current) espImgRef.current.src = espStreamUrl + '?t=' + Date.now();
+                          }}
+                          className="px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors cursor-pointer border border-slate-700"
+                        >
+                          Thử lại ESP32
+                        </button>
+                      </div>
                     </div>
                   )}
 
@@ -858,30 +856,23 @@ export default function LiveCamera() {
 
                 <div className="space-y-2.5">
                   <div className="flex items-center justify-between pb-2 border-b border-slate-100">
-                    <span className="text-sm font-medium text-slate-600">Camera ESP32-CAM</span>
+                    <span className="text-sm font-medium text-slate-600">
+                      {streamSource === 'webcam' ? 'Webcam máy tính' : 'Camera ESP32-CAM'}
+                    </span>
                     <div className="flex items-center gap-2">
-                      <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded">{espCamIp}</span>
-                      <StatusBadge status={cameraError ? 'offline' : 'online'} />
+                      <span className="font-mono font-bold text-xs text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
+                        {streamSource === 'webcam' ? 'Webcam USB/Laptop' : espCamIp}
+                      </span>
+                      <StatusBadge status={streamSource === 'webcam' ? (streaming ? 'online' : 'offline') : (deviceStatus?.espCam?.online && !cameraError ? 'online' : 'offline')} />
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pb-2 border-b border-slate-100">
+                  <div className="flex items-center justify-between pb-1">
                     <span className="text-sm font-medium text-slate-600">AI Nhận diện</span>
                     <div className="flex items-center gap-2">
                       <span className="text-xs font-semibold text-slate-500">{registeredFaceCount} SV nạp AI</span>
                       <StatusBadge status={modelsLoaded ? 'online' : 'offline'} />
                     </div>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-600">Khóa Cửa (Relay)</span>
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-full ${doorOpenTimeLeft > 0
-                      ? (doorSimulated ? 'bg-amber-100 text-amber-800 animate-pulse' : 'bg-emerald-100 text-emerald-800 animate-pulse')
-                      : 'bg-slate-100 text-slate-700'}`}>
-                      {doorOpenTimeLeft > 0
-                        ? (doorSimulated ? `[MÔ PHỎNG] MỞ (${doorOpenTimeLeft}s)` : `ĐANG MỞ (${doorOpenTimeLeft}s)`)
-                        : 'ĐANG ĐÓNG'}
-                    </span>
                   </div>
                 </div>
               </div>
@@ -954,15 +945,6 @@ export default function LiveCamera() {
                     <Sparkles className="w-4 h-4" /> Nhận diện liên tục (Auto-Scan)
                   </button>
                 )}
-
-                {/* Mở cửa */}
-                <button
-                  type="button"
-                  onClick={handleOpenDoor}
-                  className="w-full min-h-[42px] flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-white bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 focus-visible:ring-2 focus-visible:ring-blue-500 outline-none transition-all shadow-sm shadow-blue-500/25 cursor-pointer"
-                >
-                  <DoorOpen className="w-4 h-4" /> Kích Hoạt Mở Cửa (Relay {settings.doorOpenDuration}s)
-                </button>
               </div>
             </div>
           </div>

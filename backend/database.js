@@ -29,23 +29,31 @@ const DB_CONFIG = {
 };
 
 const DEFAULT_SETTINGS = {
-  shiftStart: '07:00',
-  lateThreshold: '07:15',
   espCamIp: '192.168.100.178',
-  espDevkitIp: '192.168.1.101',
   faceThreshold: '0.5',
-  autoOpenDoor: 'true',
-  doorOpenDuration: '5',
   language: 'vi',
   timezone: 'Asia/Ho_Chi_Minh',
 };
+
+const DEFAULT_SESSIONS = [
+  { id: 1, name: 'Ca Sáng', subject: 'Lập trình di động', room: 'A2-301', day_of_week: 1, start_time: '07:00', end_time: '09:30', late_after: '07:15', is_active: 1 },
+  { id: 2, name: 'Ca Chiều', subject: 'Mạng máy tính', room: 'A2-302', day_of_week: 1, start_time: '13:00', end_time: '15:30', late_after: '13:15', is_active: 1 },
+  { id: 3, name: 'Ca Sáng', subject: 'Cơ sở dữ liệu', room: 'B3-201', day_of_week: 2, start_time: '07:00', end_time: '09:30', late_after: '07:15', is_active: 1 },
+  { id: 4, name: 'Ca Chiều', subject: 'Trí tuệ nhân tạo', room: 'B3-202', day_of_week: 2, start_time: '13:00', end_time: '15:30', late_after: '13:15', is_active: 1 },
+  { id: 5, name: 'Ca Sáng', subject: 'Lập trình di động', room: 'A2-301', day_of_week: 3, start_time: '07:00', end_time: '09:30', late_after: '07:15', is_active: 1 },
+  { id: 6, name: 'Ca Sáng', subject: 'Hệ điều hành', room: 'C1-101', day_of_week: 4, start_time: '07:00', end_time: '09:30', late_after: '07:15', is_active: 1 },
+  { id: 7, name: 'Ca Chiều', subject: 'Mạng máy tính', room: 'A2-302', day_of_week: 4, start_time: '13:00', end_time: '15:30', late_after: '13:15', is_active: 1 },
+  { id: 8, name: 'Ca Sáng', subject: 'IoT & Hệ thống nhúng', room: 'D4-401', day_of_week: 5, start_time: '07:00', end_time: '09:30', late_after: '07:15', is_active: 1 },
+];
 
 // Bộ nhớ đệm file dự phòng nếu MySQL chưa khởi động
 let memoryData = {
   students: [],
   attendance_logs: [],
+  sessions: [...DEFAULT_SESSIONS],
   settings: { ...DEFAULT_SETTINGS },
   nextLogId: 1,
+  nextSessionId: 9,
 };
 
 function loadMemoryData() {
@@ -53,11 +61,14 @@ function loadMemoryData() {
     if (fs.existsSync(DB_FILE)) {
       const raw = fs.readFileSync(DB_FILE, 'utf-8');
       const parsed = JSON.parse(raw);
+      const parsedSessions = parsed.sessions && parsed.sessions.length > 0 ? parsed.sessions : DEFAULT_SESSIONS;
       memoryData = {
         students: parsed.students || [],
         attendance_logs: parsed.attendance_logs || [],
+        sessions: parsedSessions,
         settings: { ...DEFAULT_SETTINGS, ...(parsed.settings || {}) },
         nextLogId: parsed.nextLogId || (parsed.attendance_logs ? parsed.attendance_logs.length + 1 : 1),
+        nextSessionId: parsed.nextSessionId || (parsedSessions.length + 1),
       };
     }
   } catch (err) {
@@ -67,7 +78,7 @@ function loadMemoryData() {
 function saveMemoryData() {
   try {
     fs.writeFileSync(DB_FILE, JSON.stringify(memoryData, null, 2), 'utf-8');
-  } catch {}
+  } catch { }
 }
 loadMemoryData();
 
@@ -116,6 +127,22 @@ function initMysqlTables() {
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
   `;
 
+  const createSessions = `
+    CREATE TABLE IF NOT EXISTS \`sessions\` (
+      \`id\` INT AUTO_INCREMENT PRIMARY KEY,
+      \`name\` VARCHAR(100) NOT NULL,
+      \`subject\` VARCHAR(150) NOT NULL,
+      \`room\` VARCHAR(50) DEFAULT '',
+      \`day_of_week\` TINYINT NOT NULL,
+      \`start_time\` VARCHAR(5) NOT NULL,
+      \`end_time\` VARCHAR(5) NOT NULL,
+      \`late_after\` VARCHAR(5) DEFAULT NULL,
+      \`is_active\` TINYINT NOT NULL DEFAULT 1,
+      INDEX \`idx_day\` (\`day_of_week\`),
+      INDEX \`idx_active\` (\`is_active\`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `;
+
   const createLogs = `
     CREATE TABLE IF NOT EXISTS \`attendance_logs\` (
       \`id\` INT AUTO_INCREMENT PRIMARY KEY,
@@ -123,9 +150,16 @@ function initMysqlTables() {
       \`timestamp\` BIGINT NOT NULL,
       \`status\` ENUM('on-time', 'late') NOT NULL DEFAULT 'on-time',
       \`confidence\` FLOAT DEFAULT NULL,
+      \`session_id\` INT DEFAULT NULL,
       INDEX \`idx_timestamp\` (\`timestamp\`),
-      INDEX \`idx_student_id\` (\`student_id\`)
+      INDEX \`idx_student_id\` (\`student_id\`),
+      INDEX \`idx_session_id\` (\`session_id\`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+  `;
+
+  // Thêm cột session_id vào bảng attendance_logs cũ (nếu đã tồn tại nhưng chưa có cột này)
+  const addSessionIdCol = `
+    ALTER TABLE \`attendance_logs\` ADD COLUMN \`session_id\` INT DEFAULT NULL;
   `;
 
   const createSettings = `
@@ -136,7 +170,9 @@ function initMysqlTables() {
   `;
 
   pool.query(createStudents);
+  pool.query(createSessions);
   pool.query(createLogs);
+  pool.query(addSessionIdCol, () => { }); // Bỏ qua lỗi nếu cột đã tồn tại
   pool.query(createSettings);
 
   // Sync default settings
@@ -165,19 +201,39 @@ function initMysqlTables() {
             memoryData.attendance_logs = logs.map(l => ({
               ...l,
               timestamp: Number(l.timestamp),
+              session_id: l.session_id || null,
             }));
             const maxId = logs.reduce((max, l) => Math.max(max, l.id || 0), 0);
             memoryData.nextLogId = maxId + 1;
           }
 
-          pool.query('SELECT * FROM settings', (errSet, settings) => {
-            if (!errSet && settings) {
-              settings.forEach(row => {
-                memoryData.settings[row.key] = row.value;
-              });
+          pool.query('SELECT * FROM sessions', (errSess, sessions) => {
+            if (!errSess && sessions && sessions.length > 0) {
+              memoryData.sessions = sessions.map(s => ({ ...s }));
+              const maxSessId = sessions.reduce((max, s) => Math.max(max, s.id || 0), 0);
+              memoryData.nextSessionId = maxSessId + 1;
+            } else {
+              // Bảng sessions trên MySQL đang trống -> Đồng bộ DEFAULT_SESSIONS lên MySQL
+              console.log(`📥 [XAMPP MySQL] Đang nạp ${DEFAULT_SESSIONS.length} ca học mặc định vào MySQL...`);
+              for (const sess of DEFAULT_SESSIONS) {
+                pool.query(
+                  'INSERT INTO sessions (id, name, subject, room, day_of_week, start_time, end_time, late_after, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+                  [sess.id, sess.name, sess.subject, sess.room, sess.day_of_week, sess.start_time, sess.end_time, sess.late_after, sess.is_active]
+                );
+              }
+              memoryData.sessions = [...DEFAULT_SESSIONS];
+              memoryData.nextSessionId = 9;
             }
-            saveMemoryData();
-            console.log(`✅ [XAMPP MySQL] Đã nạp ${memoryData.students.length} sinh viên & ${memoryData.attendance_logs.length} lượt điểm danh từ MySQL!`);
+
+            pool.query('SELECT * FROM settings', (errSet, settings) => {
+              if (!errSet && settings) {
+                settings.forEach(row => {
+                  memoryData.settings[row.key] = row.value;
+                });
+              }
+              saveMemoryData();
+              console.log(`✅ [XAMPP MySQL] Đã nạp ${memoryData.students.length} sinh viên, ${memoryData.sessions.length} ca học & ${memoryData.attendance_logs.length} lượt điểm danh từ MySQL!`);
+            });
           });
         });
       });
@@ -192,8 +248,14 @@ function initMysqlTables() {
       }
       for (const l of memoryData.attendance_logs) {
         pool.query(
-          'INSERT INTO attendance_logs (id, student_id, timestamp, status, confidence) VALUES (?, ?, ?, ?, ?)',
-          [l.id, l.student_id, l.timestamp, l.status, l.confidence]
+          'INSERT INTO attendance_logs (id, student_id, timestamp, status, confidence, session_id) VALUES (?, ?, ?, ?, ?, ?)',
+          [l.id, l.student_id, l.timestamp, l.status, l.confidence, l.session_id || null]
+        );
+      }
+      for (const sess of memoryData.sessions) {
+        pool.query(
+          'INSERT INTO sessions (id, name, subject, room, day_of_week, start_time, end_time, late_after, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+          [sess.id, sess.name, sess.subject, sess.room, sess.day_of_week, sess.start_time, sess.end_time, sess.late_after, sess.is_active]
         );
       }
       console.log('✅ [XAMPP MySQL] Đồng bộ hoàn tất!');
@@ -262,7 +324,35 @@ class UnifiedDatabase {
       return Object.entries(memoryData.settings).map(([k, v]) => ({ key: k, value: String(v) }));
     }
 
-    // 3. SELECT attendance_logs
+    // 3. SELECT sessions
+    if (sql.includes('FROM sessions')) {
+      if (sql.includes('WHERE id = ?')) {
+        const id = Number(params[0]);
+        const sess = memoryData.sessions.find(s => s.id === id);
+        return sess ? [sess] : [];
+      }
+
+      let result = [...memoryData.sessions];
+
+      if (sql.includes('day_of_week = ?')) {
+        const day = Number(params[0]);
+        result = result.filter(s => s.day_of_week === day);
+      }
+
+      if (sql.includes('is_active = 1')) {
+        result = result.filter(s => s.is_active === 1 || s.is_active === true);
+      }
+
+      if (sql.includes('start_time <= ?') && sql.includes('end_time >= ?')) {
+        const timeIdx = sql.includes('day_of_week = ?') ? 1 : 0;
+        const currentTime = params[timeIdx];
+        result = result.filter(s => s.start_time <= currentTime && s.end_time >= currentTime);
+      }
+
+      return result;
+    }
+
+    // 4. SELECT attendance_logs
     if (sql.includes('FROM attendance_logs')) {
       if (sql.includes('GROUP BY status')) {
         let logs = memoryData.attendance_logs;
@@ -302,6 +392,7 @@ class UnifiedDatabase {
 
       let result = memoryData.attendance_logs.map(l => {
         const student = memoryData.students.find(s => s.id === l.student_id) || {};
+        const session = l.session_id ? memoryData.sessions.find(s => s.id === l.session_id) : null;
         return {
           id: l.id,
           studentId: l.student_id,
@@ -310,6 +401,10 @@ class UnifiedDatabase {
           timestamp: l.timestamp,
           status: l.status,
           confidence: l.confidence,
+          session_id: l.session_id || null,
+          sessionName: session ? session.name : null,
+          subject: session ? session.subject : null,
+          room: session ? session.room : null,
         };
       });
 
@@ -425,7 +520,7 @@ class UnifiedDatabase {
     }
 
     if (sql.startsWith('INSERT INTO attendance_logs')) {
-      const [student_id, timestamp, status, confidence] = params;
+      const [student_id, timestamp, status, confidence, session_id] = params;
       const logId = memoryData.nextLogId++;
       const newLog = {
         id: logId,
@@ -433,14 +528,15 @@ class UnifiedDatabase {
         timestamp: Number(timestamp) || Date.now(),
         status: status || 'on-time',
         confidence: confidence !== undefined ? Number(confidence) : null,
+        session_id: session_id || null,
       };
       memoryData.attendance_logs.unshift(newLog);
       saveMemoryData();
 
       if (isMysqlConnected && pool) {
         pool.query(
-          'INSERT INTO attendance_logs (student_id, timestamp, status, confidence) VALUES (?, ?, ?, ?)',
-          [student_id, Number(timestamp) || Date.now(), status || 'on-time', confidence || null]
+          'INSERT INTO attendance_logs (student_id, timestamp, status, confidence, session_id) VALUES (?, ?, ?, ?, ?)',
+          [student_id, Number(timestamp) || Date.now(), status || 'on-time', confidence || null, session_id || null]
         );
       }
       return { changes: 1, lastInsertRowid: logId };
@@ -486,6 +582,73 @@ class UnifiedDatabase {
         }
         return { changes: count };
       }
+    }
+
+    if (sql.startsWith('INSERT INTO sessions') || sql.startsWith('INSERT OR REPLACE INTO sessions')) {
+      const [name, subject, room, day_of_week, start_time, end_time, late_after, is_active] = params;
+      const sessId = memoryData.nextSessionId++;
+      const sessObj = {
+        id: sessId,
+        name,
+        subject,
+        room: room || '',
+        day_of_week: Number(day_of_week),
+        start_time,
+        end_time,
+        late_after: late_after || null,
+        is_active: is_active !== undefined ? Number(is_active) : 1,
+      };
+      memoryData.sessions.push(sessObj);
+      saveMemoryData();
+
+      if (isMysqlConnected && pool) {
+        pool.query(
+          'INSERT INTO sessions (name, subject, room, day_of_week, start_time, end_time, late_after, is_active) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+          [name, subject, room || '', Number(day_of_week), start_time, end_time, late_after || null, is_active !== undefined ? Number(is_active) : 1]
+        );
+      }
+      return { changes: 1, lastInsertRowid: sessId };
+    }
+
+    if (sql.startsWith('UPDATE sessions')) {
+      const id = Number(params[params.length - 1]);
+      const sess = memoryData.sessions.find(s => s.id === id);
+      if (!sess) return { changes: 0 };
+
+      const setMatch = sql.match(/SET (.+?) WHERE/i);
+      if (setMatch) {
+        const parts = setMatch[1].split(',').map(p => p.trim());
+        parts.forEach((part, index) => {
+          if (part.includes('name = ?')) sess.name = params[index];
+          if (part.includes('subject = ?')) sess.subject = params[index];
+          if (part.includes('room = ?')) sess.room = params[index];
+          if (part.includes('day_of_week = ?')) sess.day_of_week = Number(params[index]);
+          if (part.includes('start_time = ?')) sess.start_time = params[index];
+          if (part.includes('end_time = ?')) sess.end_time = params[index];
+          if (part.includes('late_after = ?')) sess.late_after = params[index];
+          if (part.includes('is_active = ?')) sess.is_active = Number(params[index]);
+        });
+      }
+      saveMemoryData();
+
+      if (isMysqlConnected && pool) {
+        pool.query(
+          'UPDATE sessions SET name=?, subject=?, room=?, day_of_week=?, start_time=?, end_time=?, late_after=?, is_active=? WHERE id=?',
+          [sess.name, sess.subject, sess.room, sess.day_of_week, sess.start_time, sess.end_time, sess.late_after, sess.is_active, id]
+        );
+      }
+      return { changes: 1 };
+    }
+
+    if (sql.startsWith('DELETE FROM sessions')) {
+      const id = Number(params[0]);
+      const initLen = memoryData.sessions.length;
+      memoryData.sessions = memoryData.sessions.filter(s => s.id !== id);
+      saveMemoryData();
+      if (isMysqlConnected && pool) {
+        pool.query('DELETE FROM sessions WHERE id = ?', [id]);
+      }
+      return { changes: initLen - memoryData.sessions.length };
     }
 
     if (sql.includes('settings')) {

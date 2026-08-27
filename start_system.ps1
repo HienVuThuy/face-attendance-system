@@ -6,7 +6,7 @@ Write-Host ""
 $baseDir = Split-Path -Parent $MyInvocation.MyCommand.Path
 
 Write-Host "[1/3] Đang khởi động Backend Server (Port 3001)..." -ForegroundColor Yellow
-Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$baseDir\backend'; node server.js"
+Start-Process powershell -ArgumentList "-NoExit", "-Command", "Set-Location '$baseDir\backend'; node --watch server.js"
 
 Start-Sleep -Seconds 2
 

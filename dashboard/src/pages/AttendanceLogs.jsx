@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { Download, Search, Filter, CalendarDays, PlusCircle, Edit3, Trash2, RotateCcw } from 'lucide-react';
+import { Download, Search, Filter, CalendarDays, PlusCircle, Edit3, Trash2, RotateCcw, ArrowUpDown } from 'lucide-react';
 import Modal from '../components/Modal';
 import StatusBadge from '../components/StatusBadge';
 import { useToast } from '../components/Toast';
@@ -7,7 +7,20 @@ import { useData } from '../context/DataContext';
 import { formatDate, formatTime, getInitials } from '../utils/helpers';
 
 export default function AttendanceLogs() {
-  const { logs, students, addAttendanceLog, updateAttendanceLog, deleteAttendanceLog, clearAttendanceLogs, fetchLogs } = useData();
+  const {
+    logs,
+    students,
+    addAttendanceLog,
+    updateAttendanceLog,
+    deleteAttendanceLog,
+    clearAttendanceLogs,
+    fetchLogs,
+    isAutoSyncEnabled,
+    setIsAutoSyncEnabled,
+    lastSyncTime,
+    newestLogId,
+    syncMode,
+  } = useData();
   const { addToast } = useToast();
 
   const [search, setSearch] = useState('');
@@ -249,12 +262,45 @@ export default function AttendanceLogs() {
       </div>
 
       {/* Meta Bar */}
-      <div className="flex items-center justify-between px-1">
-        <p className="text-sm text-slate-500 font-medium">
-          Hiển thị <span className="font-bold text-slate-800 tabular-nums">{filtered.length}</span> / <span className="tabular-nums">{logs.length}</span> lượt điểm danh
-        </p>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 px-1">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm text-slate-500 font-medium">
+            Hiển thị <span className="font-bold text-slate-800 tabular-nums">{filtered.length}</span> / <span className="tabular-nums">{logs.length}</span> lượt điểm danh
+          </p>
 
-        <div className="flex items-center gap-2">
+          {/* Live Sync Status Pill */}
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAutoSyncEnabled(!isAutoSyncEnabled)}
+              title={isAutoSyncEnabled ? "Đang bật tự động cập nhật thời gian thực (Bấm để tạm dừng)" : "Đang tạm dừng tự động cập nhật (Bấm để bật lại)"}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold transition-all border cursor-pointer ${
+                isAutoSyncEnabled
+                  ? 'bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 shadow-xs'
+                  : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
+              }`}
+            >
+              <span className={`w-2 h-2 rounded-full ${isAutoSyncEnabled ? 'bg-emerald-500 animate-pulse-dot' : 'bg-slate-400'}`} />
+              {isAutoSyncEnabled ? (syncMode === 'sse' ? 'LIVE (Real-time SSE)' : 'LIVE (Tự động cập nhật)') : 'Tự động: Tạm dừng'}
+            </button>
+            <span className="text-[11px] text-slate-400 font-mono tabular-nums hidden md:inline">
+              Cập nhật: {formatTime(lastSyncTime)}
+            </span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-end sm:self-auto">
+          {/* Sort Order Toggle */}
+          <button
+            type="button"
+            onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+            title={`Đang sắp xếp: ${sortOrder === 'desc' ? 'Mới nhất trước' : 'Cũ nhất trước'}`}
+            className="flex items-center gap-1 text-xs font-semibold text-slate-600 hover:text-slate-900 bg-white hover:bg-slate-50 px-2.5 py-1.5 rounded-xl border border-slate-200 transition-colors cursor-pointer"
+          >
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-500" />
+            <span>{sortOrder === 'desc' ? 'Mới nhất' : 'Cũ nhất'}</span>
+          </button>
+
           {logs.length > 0 && (
             <button
               type="button"
@@ -269,7 +315,7 @@ export default function AttendanceLogs() {
             type="button"
             onClick={handleRefresh}
             disabled={isRefreshing}
-            title="Làm mới lịch sử"
+            title="Làm mới lịch sử ngay"
             className="flex items-center gap-1.5 text-xs font-semibold text-blue-600 hover:text-blue-700 bg-blue-50 hover:bg-blue-100 px-3 py-1.5 rounded-xl border border-blue-200 transition-colors cursor-pointer disabled:opacity-60"
           >
             <RotateCcw className={`w-3.5 h-3.5 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -287,6 +333,7 @@ export default function AttendanceLogs() {
                 <th scope="col">Sinh viên</th>
                 <th scope="col">Mã SV</th>
                 <th scope="col">Lớp</th>
+                <th scope="col">Ca học / Môn</th>
                 <th scope="col">Ngày điểm danh</th>
                 <th scope="col">Thời gian</th>
                 <th scope="col">Trạng thái</th>
@@ -294,48 +341,76 @@ export default function AttendanceLogs() {
               </tr>
             </thead>
             <tbody>
-              {filtered.map((log, i) => (
-                <tr key={log.id} className="animate-fade-in" style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}>
-                  <td>
-                    <div className="flex items-center gap-3">
-                      <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-xs">
-                        {getInitials(log.name)}
+              {filtered.map((log, i) => {
+                const isNewest = newestLogId === log.id;
+                return (
+                  <tr
+                    key={log.id}
+                    className={`transition-colors duration-500 animate-fade-in ${
+                      isNewest ? 'bg-emerald-50/90 ring-1 ring-emerald-400 ring-inset' : ''
+                    }`}
+                    style={{ animationDelay: `${Math.min(i, 10) * 20}ms` }}
+                  >
+                    <td>
+                      <div className="flex items-center gap-3">
+                        <div className="w-9 h-9 rounded-full bg-gradient-to-br from-blue-600 via-indigo-600 to-purple-600 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-xs">
+                          {getInitials(log.name)}
+                        </div>
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-bold text-slate-800">{log.name}</span>
+                            {isNewest && (
+                              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-black bg-emerald-600 text-white animate-scale-in tracking-wider shadow-xs">
+                                VỪA CHECK-IN
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </div>
-                      <span className="font-bold text-slate-800">{log.name}</span>
-                    </div>
-                  </td>
-                  <td className="font-mono text-sm text-slate-700 font-bold tabular-nums">{log.studentId}</td>
-                  <td className="text-slate-600 font-medium">{log.lop}</td>
-                  <td className="text-slate-600 font-medium tabular-nums">{formatDate(log.timestamp)}</td>
-                  <td className="text-slate-700 font-mono font-bold tabular-nums">{formatTime(log.timestamp)}</td>
-                  <td><StatusBadge status={log.status} /></td>
-                  <td className="text-right">
-                    <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => { setEditingLog({ ...log }); setShowEditModal(true); }}
-                        aria-label={`Sửa trạng thái của ${log.name}`}
-                        title="Sửa trạng thái"
-                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
-                      >
-                        <Edit3 className="w-3.5 h-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleDeleteLog(log.id, log.name)}
-                        aria-label={`Xóa bản ghi của ${log.name}`}
-                        title="Xóa bản ghi"
-                        className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="font-mono text-sm text-slate-700 font-bold tabular-nums">{log.studentId}</td>
+                    <td className="text-slate-600 font-medium">{log.lop}</td>
+                    <td>
+                      {log.subject ? (
+                        <div className="min-w-0">
+                          <p className="text-xs font-bold text-slate-800 truncate">{log.subject}</p>
+                          <p className="text-[11px] text-slate-400 truncate">{log.sessionName}{log.room ? ` • ${log.room}` : ''}</p>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-300 italic">—</span>
+                      )}
+                    </td>
+                    <td className="text-slate-600 font-medium tabular-nums">{formatDate(log.timestamp)}</td>
+                    <td className="text-slate-700 font-mono font-bold tabular-nums">{formatTime(log.timestamp)}</td>
+                    <td><StatusBadge status={log.status} /></td>
+                    <td className="text-right">
+                      <div className="flex items-center justify-end gap-1">
+                        <button
+                          type="button"
+                          onClick={() => { setEditingLog({ ...log }); setShowEditModal(true); }}
+                          aria-label={`Sửa trạng thái của ${log.name}`}
+                          title="Sửa trạng thái"
+                          className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-blue-50 hover:text-blue-600 transition-colors cursor-pointer"
+                        >
+                          <Edit3 className="w-3.5 h-3.5" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteLog(log.id, log.name)}
+                          aria-label={`Xóa bản ghi của ${log.name}`}
+                          title="Xóa bản ghi"
+                          className="min-w-[34px] min-h-[34px] flex items-center justify-center rounded-lg text-slate-500 hover:bg-rose-50 hover:text-rose-600 transition-colors cursor-pointer"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={7} className="text-center py-16 text-slate-400">
+                  <td colSpan={8} className="text-center py-16 text-slate-400">
                     <p className="text-base font-semibold text-slate-600">Không có bản ghi điểm danh nào</p>
                     <p className="text-xs text-slate-400 mt-1">Bấm "Ghi nhận thủ công" hoặc đợi camera quét điểm danh.</p>
                   </td>

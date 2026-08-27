@@ -10,6 +10,7 @@ import { fileURLToPath } from 'url';
 
 import studentsRouter from './routes/students.js';
 import attendanceRouter from './routes/attendance.js';
+import sessionsRouter from './routes/sessions.js';
 import statsRouter from './routes/stats.js';
 import settingsRouter from './routes/settings.js';
 import deviceRouter from './routes/device.js';
@@ -35,6 +36,7 @@ app.use('/uploads', express.static(uploadsDir));
 // API Routes
 app.use('/api/students', studentsRouter);
 app.use('/api/attendance', attendanceRouter);
+app.use('/api/sessions', sessionsRouter);
 app.use('/api/stats', statsRouter);
 app.use('/api/settings', settingsRouter);
 app.use('/api/device', deviceRouter);

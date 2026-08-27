@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Clock, Wifi, Globe, Save, RotateCcw, Sliders, Cpu } from 'lucide-react';
+import { Wifi, Globe, Save, RotateCcw, Sliders, Cpu, Camera } from 'lucide-react';
 import { useToast } from '../components/Toast';
 import { useData } from '../context/DataContext';
 
@@ -19,7 +19,7 @@ export default function Settings() {
   };
 
   const handleChange = (key, value) => {
-    if (key === 'espCamIp' || key === 'espDevkitIp') {
+    if (key === 'espCamIp') {
       value = cleanIp(value);
     }
     setFormState(prev => ({ ...prev, [key]: value }));
@@ -31,10 +31,9 @@ export default function Settings() {
       const payload = {
         ...formState,
         espCamIp: cleanIp(formState.espCamIp),
-        espDevkitIp: cleanIp(formState.espDevkitIp),
       };
       await updateSettings(payload);
-      addToast('✅ Đã lưu và áp dụng địa chỉ IP mới cho toàn bộ hệ thống!', 'success');
+      addToast('✅ Đã lưu và áp dụng cấu hình hệ thống mới thành công!', 'success');
     } catch (err) {
       addToast('Lỗi lưu cấu hình: ' + err.message, 'error');
     }
@@ -50,129 +49,32 @@ export default function Settings() {
   };
 
   return (
-    <form onSubmit={handleSave} className="space-y-6 animate-fade-in max-w-4xl">
-      {/* Attendance Rules */}
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
-          <div className="p-2.5 rounded-xl bg-blue-50 text-blue-600 border border-blue-100 flex items-center justify-center">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">Quy tắc điểm danh ca học</h3>
-            <p className="text-sm text-slate-500">Cấu hình thời gian bắt đầu ca và ngưỡng đánh dấu đi muộn</p>
-          </div>
-        </div>
-        <div className="p-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="settings-shift-start" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Giờ bắt đầu ca học
-              </label>
-              <input
-                id="settings-shift-start"
-                type="time"
-                value={formState.shiftStart || '07:00'}
-                onChange={(e) => handleChange('shiftStart', e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
-              />
-              <p className="text-xs text-slate-400 mt-1">VD: 07:00 AM — Sinh viên check-in trước giờ này là "Đúng giờ"</p>
-            </div>
-            <div>
-              <label htmlFor="settings-late-threshold" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Ngưỡng đánh dấu đi muộn
-              </label>
-              <input
-                id="settings-late-threshold"
-                type="time"
-                value={formState.lateThreshold || '07:15'}
-                onChange={(e) => handleChange('lateThreshold', e.target.value)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
-              />
-              <p className="text-xs text-slate-400 mt-1">Check-in sau thời gian này sẽ tự động phân loại "Đi muộn"</p>
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 pt-2">
-            <div>
-              <label htmlFor="settings-auto-open-door" className="flex items-center gap-3 cursor-pointer select-none">
-                <div className="relative">
-                  <input
-                    id="settings-auto-open-door"
-                    type="checkbox"
-                    checked={Boolean(formState.autoOpenDoor)}
-                    onChange={(e) => handleChange('autoOpenDoor', e.target.checked)}
-                    className="sr-only"
-                  />
-                  <div className={`w-11 h-6 rounded-full transition-colors ${formState.autoOpenDoor ? 'bg-blue-600' : 'bg-slate-300'}`}>
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-sm transition-transform mt-0.5 ${formState.autoOpenDoor ? 'translate-x-5.5 ml-0.5' : 'translate-x-0.5'}`} />
-                  </div>
-                </div>
-                <div>
-                  <span className="text-sm font-bold text-slate-800">Tự động kích hoạt mở cửa</span>
-                  <p className="text-xs text-slate-500">Kích hoạt rơ-le mở cửa khi nhận diện khuôn mặt thành công</p>
-                </div>
-              </label>
-            </div>
-
-            <div>
-              <label htmlFor="settings-door-duration" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Thời gian giữ mở cửa (giây)
-              </label>
-              <input
-                id="settings-door-duration"
-                type="number"
-                min="1"
-                max="30"
-                value={formState.doorOpenDuration || 5}
-                onChange={(e) => handleChange('doorOpenDuration', parseInt(e.target.value) || 5)}
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
-              />
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* IoT Connection Settings */}
+    <form onSubmit={handleSave} className="space-y-6 animate-fade-in max-w-4xl pb-12">
+      {/* IoT Camera Settings */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div className="px-6 py-4 border-b border-slate-100 flex items-center gap-3">
           <div className="p-2.5 rounded-xl bg-emerald-50 text-emerald-600 border border-emerald-100 flex items-center justify-center">
-            <Wifi className="w-5 h-5" />
+            <Camera className="w-5 h-5" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-slate-800 tracking-tight">Kết nối phần cứng IoT</h3>
-            <p className="text-sm text-slate-500">Cấu hình địa chỉ IP của ESP32-CAM và ESP32 DevKit (Relay)</p>
+            <h3 className="text-base font-bold text-slate-800 tracking-tight">Kết nối Camera IoT (ESP32-CAM)</h3>
+            <p className="text-sm text-slate-500">Cấu hình địa chỉ IP thiết bị camera truyền luồng video thời gian thực</p>
           </div>
         </div>
         <div className="p-6 space-y-5">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-            <div>
-              <label htmlFor="settings-esp-cam-ip" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Địa chỉ IP ESP32-CAM (Camera)
-              </label>
-              <input
-                id="settings-esp-cam-ip"
-                type="text"
-                value={formState.espCamIp || '192.168.1.100'}
-                onChange={(e) => handleChange('espCamIp', e.target.value)}
-                placeholder="192.168.x.x"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
-              />
-              <p className="text-xs text-slate-400 mt-1">Luồng MJPEG: http://&lt;IP&gt;:81/stream</p>
-            </div>
-            <div>
-              <label htmlFor="settings-esp-devkit-ip" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-                Địa chỉ IP ESP32 DevKit (Relay Mở Cửa)
-              </label>
-              <input
-                id="settings-esp-devkit-ip"
-                type="text"
-                value={formState.espDevkitIp || '192.168.1.101'}
-                onChange={(e) => handleChange('espDevkitIp', e.target.value)}
-                placeholder="192.168.x.x"
-                className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
-              />
-              <p className="text-xs text-slate-400 mt-1">Lệnh mở cửa HTTP: GET http://&lt;IP&gt;/unlock</p>
-            </div>
+          <div className="max-w-md">
+            <label htmlFor="settings-esp-cam-ip" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
+              Địa chỉ IP ESP32-CAM (Camera)
+            </label>
+            <input
+              id="settings-esp-cam-ip"
+              type="text"
+              value={formState.espCamIp || '192.168.1.100'}
+              onChange={(e) => handleChange('espCamIp', e.target.value)}
+              placeholder="192.168.x.x"
+              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-mono font-bold"
+            />
+            <p className="text-xs text-slate-400 mt-1.5">Luồng video MJPEG: <code className="text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded font-mono">http://{formState.espCamIp || '192.168.x.x'}:81/stream</code></p>
           </div>
         </div>
       </div>
@@ -191,7 +93,7 @@ export default function Settings() {
         <div className="p-6">
           <div className="max-w-md">
             <label htmlFor="settings-face-threshold" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Ngưỡng khoảng cách FaceMatcher (Threshold): <span className="font-mono text-blue-600">{formState.faceThreshold || 0.5}</span>
+              Ngưỡng khoảng cách FaceMatcher (Threshold): <span className="font-mono text-purple-600 font-black">{formState.faceThreshold || 0.5}</span>
             </label>
             <input
               id="settings-face-threshold"
@@ -201,7 +103,7 @@ export default function Settings() {
               step="0.05"
               value={formState.faceThreshold || 0.5}
               onChange={(e) => handleChange('faceThreshold', parseFloat(e.target.value))}
-              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-blue-600"
+              className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
             />
             <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
               <span>0.3 (Nghiêm ngặt)</span>
@@ -277,7 +179,7 @@ export default function Settings() {
       </div>
 
       {/* Save / Reset Buttons */}
-      <div className="flex items-center justify-end gap-3 pb-8">
+      <div className="flex items-center justify-end gap-3 pt-2">
         <button
           type="button"
           onClick={handleReset}
