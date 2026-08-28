@@ -139,6 +139,30 @@
   ],
   "attendance_logs": [
     {
+      "id": 101,
+      "student_id": "B21DCCN006",
+      "timestamp": 1787881112743,
+      "status": "late",
+      "confidence": 36,
+      "session_id": 8
+    },
+    {
+      "id": 100,
+      "student_id": "23111",
+      "timestamp": 1787881078194,
+      "status": "late",
+      "confidence": 62,
+      "session_id": 8
+    },
+    {
+      "id": 99,
+      "student_id": "23111",
+      "timestamp": 1787881015273,
+      "status": "late",
+      "confidence": 51,
+      "session_id": 8
+    },
+    {
       "id": 97,
       "student_id": "B21DCCN001",
       "timestamp": 1787533800000,
@@ -283,6 +307,6 @@
     "autoOpenDoor": "true",
     "doorOpenDuration": "5"
   },
-  "nextLogId": 99,
+  "nextLogId": 102,
   "nextSessionId": 10
 }

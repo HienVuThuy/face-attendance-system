@@ -27,7 +27,7 @@ export default function TimesheetReports() {
       setData(timesheetData);
     } catch (err) {
       console.error(err);
-      addToast('Lỗi tải dữ liệu chấm công: ' + err.message, 'error');
+      addToast('Lỗi tải dữ liệu: ' + err.message, 'error');
     } finally {
       setLoading(false);
     }
@@ -37,9 +37,9 @@ export default function TimesheetReports() {
     setIsRefreshing(true);
     try {
       await loadData();
-      addToast('✅ Đã làm mới bảng chấm công!', 'success');
+      addToast(' Đã làm mới !', 'success');
     } catch {
-      addToast('Không thể làm mới bảng chấm công', 'error');
+      addToast('Không thể làm mới', 'error');
     } finally {
       setTimeout(() => setIsRefreshing(false), 500);
     }
@@ -84,7 +84,7 @@ export default function TimesheetReports() {
     link.href = encodeURI(csv);
     link.download = `Bao_Cao_Cham_Cong_${MONTHS[month]}_${year}.csv`;
     link.click();
-    addToast(`Đã xuất báo cáo chấm công ${MONTHS[month]} ${year} ra file CSV!`, 'success');
+    addToast(`Đã xuất báo cáo  ${MONTHS[month]} ${year} ra file CSV!`, 'success');
   };
 
   // Summary stats
@@ -129,7 +129,7 @@ export default function TimesheetReports() {
             type="button"
             onClick={handleManualReload}
             disabled={isRefreshing}
-            title="Làm mới bảng chấm công"
+            title="Làm mới"
             className="p-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 hover:text-blue-600 rounded-xl transition-colors shadow-xs cursor-pointer disabled:opacity-60"
           >
             <RotateCcw className={`w-4 h-4 ${isRefreshing ? 'animate-spin text-blue-600' : ''}`} />
@@ -141,7 +141,7 @@ export default function TimesheetReports() {
           onClick={handleExport}
           className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-sm font-bold text-emerald-800 bg-emerald-50 hover:bg-emerald-100 focus-visible:ring-2 focus-visible:ring-emerald-500 outline-none transition-colors border border-emerald-300/80 shadow-xs cursor-pointer"
         >
-          <Download className="w-4 h-4 text-emerald-700" /> Xuất Báo Cáo Chấm Công
+          <Download className="w-4 h-4 text-emerald-700" /> Xuất Báo Cáo
         </button>
       </div>
 
@@ -176,7 +176,7 @@ export default function TimesheetReports() {
       {/* Timesheet Table */}
       <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="data-table" aria-label="Bảng tổng hợp chấm công chuyên cần">
+          <table className="data-table" aria-label="Bảng tổng hợp chuyên cần">
             <thead>
               <tr>
                 <th scope="col">Sinh viên</th>
@@ -192,7 +192,7 @@ export default function TimesheetReports() {
               {data.map((student, i) => {
                 const score = student.rate >= 90 ? 'A' :
                   student.rate >= 75 ? 'B' :
-                  student.rate >= 60 ? 'C' : 'D';
+                    student.rate >= 60 ? 'C' : 'D';
 
                 const scoreColors = {
                   A: 'text-emerald-700 bg-emerald-50 border border-emerald-200',
@@ -204,8 +204,8 @@ export default function TimesheetReports() {
                 const barBg = student.rate >= 80
                   ? 'bg-emerald-500'
                   : student.rate >= 60
-                  ? 'bg-amber-500'
-                  : 'bg-rose-500';
+                    ? 'bg-amber-500'
+                    : 'bg-rose-500';
 
                 return (
                   <tr key={student.id} className="animate-fade-in" style={{ animationDelay: `${i * 20}ms` }}>
