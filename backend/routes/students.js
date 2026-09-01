@@ -73,6 +73,22 @@ const upload = multer({
   },
 });
 
+// Safe helper to parse face_descriptors
+function parseDescriptors(raw) {
+  if (!raw) return [];
+  if (Array.isArray(raw)) return raw;
+  if (typeof raw === 'string') {
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  if (typeof raw === 'object') return Object.values(raw);
+  return [];
+}
+
 // ── GET /api/students ────────────────────────────────────
 // Query params: ?search=keyword&status=registered|not_registered
 router.get('/', (req, res) => {
@@ -91,9 +107,9 @@ router.get('/', (req, res) => {
 
   const rows = db.prepare(sql).all(...params);
 
-  // Thêm faceStatus dựa vào face_descriptors có dữ liệu hay không
+  // Thêm faceStatus và faceDescriptors dựa vào face_descriptors
   const result = rows.map(r => {
-    const descriptors = JSON.parse(r.face_descriptors || '[]');
+    const descriptors = parseDescriptors(r.face_descriptors);
     const faceStatus = descriptors.length > 0 ? 'registered' : 'not_registered';
 
     // Nếu filter theo status, bỏ qua những SV không khớp
@@ -104,6 +120,7 @@ router.get('/', (req, res) => {
       name: r.name,
       lop: r.lop,
       faceStatus,
+      faceDescriptors: descriptors,
       avatar: r.avatar_path ? `/uploads/${path.basename(r.avatar_path)}` : null,
       createdAt: r.created_at,
       descriptorCount: descriptors.length,
@@ -121,7 +138,7 @@ router.get('/:id', (req, res) => {
 
   if (!row) return res.status(404).json({ error: 'Sinh viên không tồn tại' });
 
-  const descriptors = JSON.parse(row.face_descriptors || '[]');
+  const descriptors = parseDescriptors(row.face_descriptors);
   res.json({
     id: row.id,
     name: row.name,
@@ -218,32 +235,56 @@ router.delete('/:id', (req, res) => {
 });
 
 // ── POST /api/students/:id/descriptors ───────────────────
-// Body: { descriptor: [128 numbers] }
-// Thêm 1 face descriptor vào danh sách descriptors của SV
+// Body: { descriptor: [128 numbers] } HOẶC { descriptors: [[128 numbers], ...] }
+// Thêm 1 hoặc nhiều face descriptor vào danh sách descriptors của SV
 router.post('/:id/descriptors', (req, res) => {
-  const { descriptor } = req.body;
-
-  if (!descriptor || !Array.isArray(descriptor) || descriptor.length !== 128) {
-    return res.status(400).json({
-      error: 'descriptor phải là mảng 128 số (Float32Array từ face-api.js)',
-    });
-  }
+  const { descriptor, descriptors: newDescriptors } = req.body;
 
   const row = db.prepare('SELECT face_descriptors FROM students WHERE id = ?')
     .get(req.params.id);
   if (!row) return res.status(404).json({ error: 'Sinh viên không tồn tại' });
 
-  const descriptors = JSON.parse(row.face_descriptors || '[]');
-  descriptors.push(descriptor);
+  const currentDescriptors = JSON.parse(row.face_descriptors || '[]');
+
+  if (Array.isArray(newDescriptors) && newDescriptors.length > 0) {
+    const valid = newDescriptors.filter(d => (Array.isArray(d) && d.length === 128) || (typeof d === 'object' && Object.keys(d).length === 128));
+    if (valid.length === 0) {
+      return res.status(400).json({ error: 'Không có descriptor 128-d hợp lệ trong danh sách' });
+    }
+    currentDescriptors.push(...valid);
+  } else if (descriptor && ((Array.isArray(descriptor) && descriptor.length === 128) || (typeof descriptor === 'object' && Object.keys(descriptor).length === 128))) {
+    currentDescriptors.push(Array.isArray(descriptor) ? descriptor : Object.values(descriptor));
+  } else {
+    return res.status(400).json({
+      error: 'descriptor phải là mảng 128 số (Float32Array từ face-api.js) hoặc mảng descriptors',
+    });
+  }
 
   db.prepare('UPDATE students SET face_descriptors = ? WHERE id = ?')
-    .run(JSON.stringify(descriptors), req.params.id);
+    .run(JSON.stringify(currentDescriptors), req.params.id);
 
   broadcastAttendanceEvent('students_updated', { action: 'descriptors', id: req.params.id });
 
   res.json({
-    message: `Đã thêm descriptor (tổng: ${descriptors.length})`,
-    count: descriptors.length,
+    message: `Đã nạp thành công dữ liệu khuôn mặt (tổng: ${currentDescriptors.length} mẫu)`,
+    count: currentDescriptors.length,
+  });
+});
+
+// ── DELETE /api/students/:id/descriptors ─────────────────
+// Xóa tất cả face descriptors của 1 SV để đăng ký lại từ đầu
+router.delete('/:id/descriptors', (req, res) => {
+  const row = db.prepare('SELECT id FROM students WHERE id = ?').get(req.params.id);
+  if (!row) return res.status(404).json({ error: 'Sinh viên không tồn tại' });
+
+  db.prepare('UPDATE students SET face_descriptors = ? WHERE id = ?')
+    .run('[]', req.params.id);
+
+  broadcastAttendanceEvent('students_updated', { action: 'descriptors', id: req.params.id });
+
+  res.json({
+    message: 'Đã xóa toàn bộ dữ liệu khuôn mặt của sinh viên',
+    count: 0,
   });
 });
 

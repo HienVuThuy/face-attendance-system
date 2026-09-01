@@ -11,7 +11,7 @@ const navTitles = {
   students: 'Quản lý Sinh viên',
   sessions: 'Quản lý Ca học (Thời khoá biểu)',
   logs: 'Lịch sử Điểm danh',
-  timesheet: 'Chấm công & Báo cáo',
+  timesheet: 'Báo cáo',
   settings: 'Cài đặt hệ thống',
 };
 

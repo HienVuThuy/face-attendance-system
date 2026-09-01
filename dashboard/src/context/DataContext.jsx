@@ -13,7 +13,7 @@ export function DataProvider({ children }) {
     shiftStart: '07:00',
     lateThreshold: '07:15',
     espCamIp: '192.168.100.178',
-    faceThreshold: 0.5,
+    faceThreshold: 0.4,
     language: 'vi',
     timezone: 'Asia/Ho_Chi_Minh',
   });
@@ -390,6 +390,43 @@ export function DataProvider({ children }) {
     }
   }, [fetchStudents]);
 
+  const addStudentDescriptors = useCallback(async (id, descriptors) => {
+    try {
+      const res = await fetch(`${API_BASE}/students/${encodeURIComponent(id)}/descriptors`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ descriptors: descriptors.map(d => Array.from(d)) }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Lỗi lưu các vector khuôn mặt');
+      }
+      const data = await res.json();
+      await fetchStudents();
+      return data;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }, [fetchStudents]);
+
+  const deleteStudentDescriptors = useCallback(async (id) => {
+    try {
+      const res = await fetch(`${API_BASE}/students/${encodeURIComponent(id)}/descriptors`, {
+        method: 'DELETE',
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Lỗi xóa vector khuôn mặt');
+      }
+      await fetchStudents();
+      return true;
+    } catch (err) {
+      console.error(err);
+      throw err;
+    }
+  }, [fetchStudents]);
+
   // ===== ATTENDANCE LOG ACTIONS =====
   const addAttendanceLog = useCallback(async (logData) => {
     try {
@@ -614,6 +651,8 @@ export function DataProvider({ children }) {
     updateStudent,
     deleteStudent,
     addStudentDescriptor,
+    addStudentDescriptors,
+    deleteStudentDescriptors,
     addAttendanceLog,
     updateAttendanceLog,
     deleteAttendanceLog,

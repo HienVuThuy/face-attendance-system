@@ -354,6 +354,26 @@ class UnifiedDatabase {
 
     // 4. SELECT attendance_logs
     if (sql.includes('FROM attendance_logs')) {
+      // ★ Query lấy student_id + status theo khoảng thời gian (dùng trong stats.js)
+      if (sql.includes('SELECT student_id, status') && sql.includes('timestamp >= ?') && !sql.includes('GROUP BY')) {
+        const startTs = params[0];
+        const endTs = params[1];
+        return memoryData.attendance_logs
+          .filter(l => l.timestamp >= startTs && l.timestamp <= endTs)
+          .map(l => ({ student_id: l.student_id, status: l.status }));
+      }
+
+      // ★ Query lấy timestamp + status cho 1 SV theo tháng (dùng trong timesheet)
+      if (sql.includes('SELECT timestamp, status') && sql.includes('student_id = ?')) {
+        const studentId = params[0];
+        const startTs = params[1];
+        const endTs = params[2];
+        return memoryData.attendance_logs
+          .filter(l => l.student_id === studentId && l.timestamp >= startTs && l.timestamp <= endTs)
+          .sort((a, b) => a.timestamp - b.timestamp)
+          .map(l => ({ timestamp: l.timestamp, status: l.status }));
+      }
+
       if (sql.includes('GROUP BY status')) {
         let logs = memoryData.attendance_logs;
 

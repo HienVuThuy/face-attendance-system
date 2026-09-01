@@ -93,7 +93,7 @@ export default function Settings() {
         <div className="p-6">
           <div className="max-w-md">
             <label htmlFor="settings-face-threshold" className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-1.5">
-              Ngưỡng khoảng cách FaceMatcher (Threshold): <span className="font-mono text-purple-600 font-black">{formState.faceThreshold || 0.5}</span>
+              Ngưỡng khoảng cách FaceMatcher (Threshold): <span className="font-mono text-purple-600 font-black">{formState.faceThreshold || 0.4}</span>
             </label>
             <input
               id="settings-face-threshold"
@@ -101,17 +101,19 @@ export default function Settings() {
               min="0.3"
               max="0.8"
               step="0.05"
-              value={formState.faceThreshold || 0.5}
+              value={formState.faceThreshold || 0.4}
               onChange={(e) => handleChange('faceThreshold', parseFloat(e.target.value))}
               className="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-purple-600"
             />
             <div className="flex justify-between text-[11px] text-slate-400 mt-1 font-mono">
-              <span>0.3 (Nghiêm ngặt)</span>
-              <span>0.5 (Khuyên dùng)</span>
+              <span>0.3 (Rất nghiêm ngặt)</span>
+              <span>0.4 (Khuyên dùng)</span>
               <span>0.8 (Dễ tính)</span>
             </div>
             <p className="text-xs text-slate-500 mt-2">
-              Khoảng cách Euclidean càng nhỏ thì độ chính xác càng cao. Nếu người lạ bị nhận nhầm, hãy giảm xuống 0.45.
+              Khoảng cách Euclidean càng nhỏ thì càng nghiêm ngặt. Nếu người lạ bị nhận nhầm, hãy giảm xuống 0.35.
+              <br/>
+              <span className="text-amber-600 font-semibold">★ Hệ thống đã có ngưỡng confidence tối thiểu 80% — dưới 80% sẽ tự động bỏ qua.</span>
             </p>
           </div>
         </div>

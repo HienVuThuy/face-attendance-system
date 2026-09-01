@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { Play, Square, Wifi, Activity, Cpu, Zap, Radio, RefreshCw, Eye, Sparkles, AlertCircle, Video, Camera, ScanFace, Loader2, UserCheck, PlusCircle } from 'lucide-react';
+import { Play, Square, Wifi, Activity, Cpu, Zap, Radio, RefreshCw, Eye, Sparkles, AlertCircle, Video, Camera, ScanFace, Loader2, UserCheck, PlusCircle, Upload, Trash2, Check, Plus, ShieldCheck } from 'lucide-react';
 import StatusBadge from '../components/StatusBadge';
 import Modal from '../components/Modal';
 import { useToast } from '../components/Toast';
@@ -11,8 +11,17 @@ import { formatTime, getInitials } from '../utils/helpers';
 // ============================================================
 const MODEL_URL = '/models';
 
+// ★ Cấu hình TinyFaceDetector nâng cao cho độ chính xác tốt hơn
+// inputSize lớn hơn = chính xác hơn (nhưng chậm hơn)
+// scoreThreshold cao hơn = chỉ phát hiện khuôn mặt rõ ràng
+const DETECTOR_OPTIONS_CONFIG = { inputSize: 512, scoreThreshold: 0.6 };
+
 export default function LiveCamera() {
-  const { students, logs, addAttendanceLog, settings, checkDeviceStatus, fetchStudents, currentSession, fetchCurrentSession } = useData();
+  const { 
+    students, logs, addAttendanceLog, settings, checkDeviceStatus, 
+    fetchStudents, currentSession, fetchCurrentSession,
+    addStudentDescriptors, deleteStudentDescriptors 
+  } = useData();
   const { addToast } = useToast();
 
   // ── Camera & Stream State ──
@@ -42,11 +51,6 @@ export default function LiveCamera() {
       setTimeout(() => setIsRefreshingStatus(false), 500);
     }
   };
-
-  // ── Quick Enroll Modal State ──
-  const [showEnrollModal, setShowEnrollModal] = useState(false);
-  const [selectedStudentForEnroll, setSelectedStudentForEnroll] = useState('');
-  const [enrolling, setEnrolling] = useState(false);
 
   // ── Refs ──
   const videoRef = useRef(null);
@@ -102,9 +106,12 @@ export default function LiveCamera() {
     if (!faceapi || !modelsLoaded) return null;
 
     try {
-      // Lấy chi tiết từng SV (gồm faceDescriptors)
+      // Dùng trực tiếp faceDescriptors từ students state hoặc fetch chi tiết nếu cần
       const detailedStudents = await Promise.all(
         students.map(async (s) => {
+          if (s.faceDescriptors && Array.isArray(s.faceDescriptors) && s.faceDescriptors.length > 0) {
+            return s;
+          }
           try {
             const res = await fetch(`/api/students/${encodeURIComponent(s.id)}`);
             if (res.ok) return await res.json();
@@ -131,7 +138,7 @@ export default function LiveCamera() {
       setRegisteredFaceCount(labeledDescriptors.length);
 
       if (labeledDescriptors.length > 0) {
-        const threshold = Number(settings.faceThreshold) || 0.5;
+        const threshold = Number(settings.faceThreshold) || 0.45;
         const matcher = new faceapi.FaceMatcher(labeledDescriptors, threshold);
         setFaceMatcher(matcher);
         return matcher;
@@ -144,6 +151,11 @@ export default function LiveCamera() {
       return null;
     }
   }, [students, modelsLoaded, settings.faceThreshold]);
+
+  // Luôn làm mới danh sách sinh viên khi vào trang Camera
+  useEffect(() => {
+    fetchStudents();
+  }, [fetchStudents]);
 
   // Auto-load models khi component mount
   useEffect(() => {
@@ -306,7 +318,7 @@ export default function LiveCamera() {
       }
 
       const detections = await faceapi
-        .detectAllFaces(inputElement, new faceapi.TinyFaceDetectorOptions())
+        .detectAllFaces(inputElement, new faceapi.TinyFaceDetectorOptions(DETECTOR_OPTIONS_CONFIG))
         .withFaceLandmarks()
         .withFaceDescriptors();
 
@@ -320,13 +332,17 @@ export default function LiveCamera() {
       drawDetections(inputElement, detections);
 
       let foundCount = 0;
+      const currentThreshold = Number(settings.faceThreshold) || 0.45;
+
       for (const det of detections) {
         const match = faceMatcher ? faceMatcher.findBestMatch(det.descriptor) : null;
         const isUnknown = !match || match.label === 'unknown';
+        const confidence = match && !isUnknown 
+          ? Math.round(Math.max(50, Math.min(99, (1 - (match.distance / (currentThreshold * 1.5))) * 100)))
+          : (match ? Math.max(1, Math.round((1 - match.distance) * 100)) : 0);
 
         if (!isUnknown) {
           foundCount++;
-          const confidence = Math.round((1 - match.distance) * 100);
           await logRecognition(match.label, confidence);
         }
       }
@@ -344,12 +360,16 @@ export default function LiveCamera() {
 
       setDetectedFaces(detections.map(det => {
         const match = faceMatcher ? faceMatcher.findBestMatch(det.descriptor) : null;
-        const sv = match && match.label !== 'unknown' ? students.find(s => s.id === match.label) : null;
+        const isUnknown = !match || match.label === 'unknown';
+        const confidence = match && !isUnknown
+          ? Math.round(Math.max(50, Math.min(99, (1 - (match.distance / (currentThreshold * 1.5))) * 100)))
+          : (match ? Math.max(1, Math.round((1 - match.distance) * 100)) : 0);
+        const sv = !isUnknown ? students.find(s => s.id === match.label) : null;
         return {
           name: sv ? sv.name : 'Người lạ (Chưa đăng ký)',
-          id: match ? match.label : 'unknown',
-          confidence: match ? Math.round((1 - match.distance) * 100) : 0,
-          isUnknown: !match || match.label === 'unknown',
+          id: !isUnknown ? match.label : 'unknown',
+          confidence,
+          isUnknown,
         };
       }));
 
@@ -400,28 +420,32 @@ export default function LiveCamera() {
         }
 
         const detections = await faceapi
-          .detectAllFaces(inputElement, new faceapi.TinyFaceDetectorOptions())
+          .detectAllFaces(inputElement, new faceapi.TinyFaceDetectorOptions(DETECTOR_OPTIONS_CONFIG))
           .withFaceLandmarks()
           .withFaceDescriptors();
 
         drawDetections(inputElement, detections);
+
+        const currentThreshold = Number(settings.faceThreshold) || 0.45;
 
         if (detections.length > 0) {
           const faces = [];
           for (const det of detections) {
             const match = faceMatcher ? faceMatcher.findBestMatch(det.descriptor) : null;
             const isUnknown = !match || match.label === 'unknown';
+            const confidence = match && !isUnknown
+              ? Math.round(Math.max(50, Math.min(99, (1 - (match.distance / (currentThreshold * 1.5))) * 100)))
+              : (match ? Math.max(1, Math.round((1 - match.distance) * 100)) : 0);
             const sv = !isUnknown ? students.find(s => s.id === match.label) : null;
 
             faces.push({
               name: sv ? sv.name : 'Người lạ (Chưa đăng ký)',
-              id: match ? match.label : 'unknown',
-              confidence: match ? Math.round((1 - match.distance) * 100) : 0,
+              id: !isUnknown ? match.label : 'unknown',
+              confidence,
               isUnknown,
             });
 
-            if (!isUnknown) {
-              const confidence = Math.round((1 - match.distance) * 100);
+            if (!isUnknown && sv) {
               await logRecognition(match.label, confidence);
             }
           }
@@ -469,12 +493,17 @@ export default function LiveCamera() {
     const ctx = canvas.getContext('2d');
     ctx.clearRect(0, 0, displayWidth, displayHeight);
 
+    const currentThreshold = Number(settings.faceThreshold) || 0.45;
+
     resized.forEach((det, i) => {
       const match = faceMatcher ? faceMatcher.findBestMatch(detections[i].descriptor) : null;
       const isUnknown = !match || match.label === 'unknown';
+      const confidence = match && !isUnknown
+        ? Math.round(Math.max(50, Math.min(99, (1 - (match.distance / (currentThreshold * 1.5))) * 100)))
+        : (match ? Math.max(1, Math.round((1 - match.distance) * 100)) : 0);
       const sv = !isUnknown ? students.find(s => s.id === match.label) : null;
       const displayName = sv
-        ? `${sv.name} (${Math.round((1 - match.distance) * 100)}%)`
+        ? `${sv.name} (${confidence}%)`
         : (faceMatcher ? 'Người lạ' : 'Phát hiện mặt (Chưa nạp AI)');
       const boxColor = isUnknown ? '#ef4444' : '#10b981';
 
@@ -530,63 +559,8 @@ export default function LiveCamera() {
   };
 
   // ═══════════════════════════════════════════════════════════
-  // 6. ĐĂNG KÝ NHANH KHUÔN MẶT TỪ CAMERA CHO SINH VIÊN
+  // 7. RENDER
   // ═══════════════════════════════════════════════════════════
-  const handleQuickEnroll = async () => {
-    if (!selectedStudentForEnroll) {
-      addToast('Vui lòng chọn một sinh viên để gán khuôn mặt!', 'error');
-      return;
-    }
-
-    const faceapi = window.faceapi;
-    if (!faceapi || !modelsLoaded) {
-      addToast('AI Models chưa tải xong!', 'error');
-      return;
-    }
-
-    setEnrolling(true);
-    try {
-      let inputElement;
-      if (streamSource === 'webcam') {
-        inputElement = videoRef.current;
-      } else {
-        inputElement = await captureFrameFromESP();
-      }
-
-      const detection = await faceapi
-        .detectSingleFace(inputElement, new faceapi.TinyFaceDetectorOptions())
-        .withFaceLandmarks()
-        .withFaceDescriptor();
-
-      if (!detection) {
-        addToast('Không tìm thấy khuôn mặt rõ ràng trong khung hình. Hãy nhìn thẳng vào camera!', 'error');
-        setEnrolling(false);
-        return;
-      }
-
-      // Gửi descriptor lên backend
-      const res = await fetch(`/api/students/${encodeURIComponent(selectedStudentForEnroll)}/descriptors`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ descriptor: Array.from(detection.descriptor) }),
-      });
-
-      if (res.ok) {
-        const targetSv = students.find(s => s.id === selectedStudentForEnroll);
-        addToast(`🎉 Đã nạp thành công khuôn mặt cho sinh viên ${targetSv ? targetSv.name : selectedStudentForEnroll}!`, 'success');
-        setShowEnrollModal(false);
-        await fetchStudents();
-        await buildFaceMatcher();
-      } else {
-        const err = await res.json();
-        addToast(`Lỗi nạp vector: ${err.error}`, 'error');
-      }
-    } catch (err) {
-      addToast('Lỗi nạp khuôn mặt: ' + err.message, 'error');
-    } finally {
-      setEnrolling(false);
-    }
-  };
 
   // ═══════════════════════════════════════════════════════════
   // RENDER
@@ -800,9 +774,11 @@ export default function LiveCamera() {
 
                   {/* Bottom HUD Telemetry */}
                   <div className="absolute bottom-4 left-12 flex items-center gap-3 bg-slate-900/80 backdrop-blur-md border border-slate-700/60 px-3 py-1.5 rounded-lg text-xs font-mono text-emerald-400 font-bold tabular-nums z-10">
-                    <span>NGƯỠNG: {settings.faceThreshold || 0.5}</span>
+                    <span>NGƯỠNG: {settings.faceThreshold || 0.45}</span>
                     <span className="text-slate-500">|</span>
-                    <span className={recognizing ? 'text-red-400' : 'text-cyan-400'}>
+                    <span className="text-cyan-400">AI: {registeredFaceCount} SV NẠP</span>
+                    <span className="text-slate-500">|</span>
+                    <span className={recognizing ? 'text-red-400' : 'text-emerald-400'}>
                       {recognizing ? 'STATUS: SCANNING' : 'STATUS: READY'}
                     </span>
                   </div>
@@ -876,15 +852,6 @@ export default function LiveCamera() {
                   </div>
                 </div>
               </div>
-
-              {/* Nút nạp nhanh khuôn mặt */}
-              <button
-                type="button"
-                onClick={() => setShowEnrollModal(true)}
-                className="mt-4 w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl text-xs font-bold text-indigo-700 bg-indigo-50 hover:bg-indigo-100 border border-indigo-200 transition-colors cursor-pointer"
-              >
-                <PlusCircle className="w-4 h-4" /> Nạp khuôn mặt hiện tại cho Sinh viên
-              </button>
             </div>
 
             {/* Action Panel */}
@@ -947,25 +914,25 @@ export default function LiveCamera() {
                 )}
               </div>
             </div>
-          </div>
         </div>
+      </div>
 
-        {/* Right: Live Recognition Log Feed (2/5) */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 h-full flex flex-col overflow-hidden">
-            <div className="px-5 py-4 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
-                  <RefreshCw className="w-4 h-4 text-blue-600" /> Nhật ký nhận diện trực tiếp
-                </h3>
-                <p className="text-xs text-slate-500 mt-0.5">Sự kiện check-in ghi nhận theo thời gian thực</p>
-              </div>
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                {recentRecognitions.length} sự kiện
-              </span>
+      {/* Right: Live Recognition Log Feed (2/5) */}
+      <div className="lg:col-span-2">
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-200/80 h-full flex flex-col overflow-hidden">
+          <div className="px-5 py-4 bg-slate-50/70 border-b border-slate-100 flex items-center justify-between">
+            <div>
+              <h3 className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
+                <RefreshCw className="w-4 h-4 text-blue-600" /> Nhật ký nhận diện trực tiếp
+              </h3>
+              <p className="text-xs text-slate-500 mt-0.5">Sự kiện check-in ghi nhận theo thời gian thực</p>
             </div>
+            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+              {recentRecognitions.length} sự kiện
+            </span>
+          </div>
 
-            <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto flex-1 p-2" role="feed" aria-label="Luồng nhận diện trực tiếp">
+          <div className="divide-y divide-slate-100 max-h-[600px] overflow-y-auto flex-1 p-2" role="feed" aria-label="Luồng nhận diện trực tiếp">
               {recentRecognitions.map((log, i) => (
                 <article
                   key={log.id}
@@ -1003,55 +970,6 @@ export default function LiveCamera() {
           </div>
         </div>
       </div>
-
-      {/* ================= MODAL: QUICK FACE ENROLL ================= */}
-      <Modal isOpen={showEnrollModal} onClose={() => setShowEnrollModal(false)} title="Nạp khuôn mặt từ Camera cho Sinh viên" size="md">
-        <div className="space-y-4">
-          <p className="text-sm text-slate-600">
-            Hệ thống sẽ lấy ngay 1 frame từ luồng camera hiện tại, trích xuất vector khuôn mặt AI và lưu vào hồ sơ sinh viên được chọn.
-          </p>
-
-          <div>
-            <label className="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">
-              Chọn Sinh viên cần nạp khuôn mặt:
-            </label>
-            <select
-              value={selectedStudentForEnroll}
-              onChange={(e) => setSelectedStudentForEnroll(e.target.value)}
-              className="w-full px-3.5 py-2.5 text-sm rounded-xl border border-slate-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-100 outline-none transition-all font-semibold"
-            >
-              <option value="">-- Chọn sinh viên trong danh sách --</option>
-              {students.map(s => (
-                <option key={s.id} value={s.id}>
-                  {s.name} ({s.id}) - {s.lop} {s.faceStatus === 'registered' ? '● Đã có mặt' : '○ Chưa có'}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 text-xs text-amber-800">
-            <b>Lưu ý:</b> Hãy nhìn thẳng vào ống kính ESP32-CAM với ánh sáng rõ ràng trước khi bấm nút xác nhận.
-          </div>
-
-          <div className="flex items-center justify-end gap-3 pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setShowEnrollModal(false)}
-              className="px-4 py-2 rounded-xl text-sm font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-            >
-              Hủy
-            </button>
-            <button
-              type="button"
-              disabled={!selectedStudentForEnroll || enrolling}
-              onClick={handleQuickEnroll}
-              className="flex items-center gap-2 px-5 py-2 rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 transition-all shadow-sm shadow-indigo-500/25 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {enrolling ? <><Loader2 className="w-4 h-4 animate-spin" /> Đang trích xuất...</> : <><UserCheck className="w-4 h-4" /> Trích xuất & Nạp vào SV</>}
-            </button>
-          </div>
-        </div>
-      </Modal>
     </div>
   );
 }
